@@ -13,7 +13,7 @@
 - Server side game validation
 
 ## Stack
-- Frontend: ___
+- Frontend: Angular with TypeScript
 - Backend: Implementation in Go and sqlite DB
 
 ## Team Members:
