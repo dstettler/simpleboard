@@ -1,0 +1,30 @@
+.login-container {
+  width: 350px;
+  margin: 100px auto;
+  padding: 30px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: gray;
+}
