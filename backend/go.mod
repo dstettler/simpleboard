@@ -4,7 +4,10 @@ go 1.26.0
 
 require (
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.2
+	github.com/google/uuid v1.6.0
 	github.com/rs/zerolog v1.34.0
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.0
 )
 
@@ -13,6 +16,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
