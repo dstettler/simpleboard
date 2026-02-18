@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^git clone https://github\\.com/dstettler/simpleboard\\.git temp_clone; Copy-Item -Recurse temp_clone\\\\\\* \\. -Force; Copy-Item -Recurse temp_clone\\\\\\.git \\. -Force; Remove-Item -Recurse -Force temp_clone$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}
