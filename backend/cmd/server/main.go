@@ -23,7 +23,7 @@ func main() {
 
 	cfg := config.Load()
 
-	router := api.NewRouter()
+	router := api.NewRouter(cfg.CORSOrigins)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := &http.Server{
