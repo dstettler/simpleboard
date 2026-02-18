@@ -1,4 +1,4 @@
-module cise.ufl.edu/no-frills-chess
+module cise.ufl.edu/simpleboard
 
 go 1.26.0
 

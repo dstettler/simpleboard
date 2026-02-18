@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"cise.ufl.edu/no-frills-chess/pkg/response"
+	"cise.ufl.edu/simpleboard/pkg/response"
 )
 
 

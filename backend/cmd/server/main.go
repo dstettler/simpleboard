@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"cise.ufl.edu/no-frills-chess/api"
-	"cise.ufl.edu/no-frills-chess/pkg/config"
+	"cise.ufl.edu/simpleboard/api"
+	"cise.ufl.edu/simpleboard/pkg/config"
 )
 
 func main() {
