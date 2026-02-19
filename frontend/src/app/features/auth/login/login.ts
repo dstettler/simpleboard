@@ -1,19 +1,27 @@
 import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+  styleUrls: ['./login.css']
 })
 export class LoginComponent {
 
   loginForm: FormGroup;
+  authError: string = '';
+  isLoading: boolean = false;
 
-  constructor(private fb: FormBuilder) {
+  private testUser = {
+    email: 'test@chess.com',
+    password: '123456'
+  };
+
+  constructor(private fb: FormBuilder, private router: Router) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -21,8 +29,24 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.loginForm.valid) {
-      console.log('Login Data:', this.loginForm.value);
-    }
+
+    if (this.loginForm.invalid) return;
+
+    this.authError = '';
+    this.isLoading = true;
+
+    const { email, password } = this.loginForm.value;
+
+    setTimeout(() => {
+
+      if (email === this.testUser.email && password === this.testUser.password) {
+        this.router.navigate(['/dashboard']);
+      } else {
+        this.authError = 'Invalid email or password';
+      }
+
+      this.isLoading = false;
+
+    }, 1000);
   }
 }
