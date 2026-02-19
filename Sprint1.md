@@ -56,12 +56,13 @@
 - Created the login page UI and redirect
 - Game board creation and styling
 - Initial piece movability
+- 
 
 ### Which ones didn't and why?
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTYwNjU1MjU2NywxMzQ1NTQ4MjEzLDY4MD
-k2MjY2NywxNjY5ODAyNzUyLDE1MDU1OTcyODAsLTE5MDYwOTg0
-NDAsLTU2ODU3NzU0OV19
+eyJoaXN0b3J5IjpbLTE0NzU1NjkzNTgsMTYwNjU1MjU2NywxMz
+Q1NTQ4MjEzLDY4MDk2MjY2NywxNjY5ODAyNzUyLDE1MDU1OTcy
+ODAsLTE5MDYwOTg0NDAsLTU2ODU3NzU0OV19
 -->
