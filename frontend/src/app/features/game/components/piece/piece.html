@@ -1,1 +1,7 @@
-<img class="chess-piece" src="{{ piece.getImageUrl() }}" />
+<div class="draggable-piece"
+    cdkDrag
+    [cdkDragBoundary]="'#board'"
+    [cdkDragFreeDragPosition]="dragPosition"
+    (cdkDragEnded)="onDragEnded($event)">
+    <img class="chess-piece" src="{{ piece.getImageUrl() }}" />
+</div>

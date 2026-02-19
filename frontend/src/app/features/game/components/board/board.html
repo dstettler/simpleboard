@@ -1,18 +1,19 @@
 <!-- Base board layout -->
-<div id="board">
-    @if (boardState$ | async; as piecesMap) {
-            @for (row of rows; track $index; let rowIdx = $index) {
-            <div class="board-row">
-                @for (col of cols; track $index; let colIdx = $index) {
-                    <div class="board-square">
-                        @if (getItem(piecesMap, rowIdx, colIdx); as item) {
-                            <app-piece [piece]=item cdkDrag></app-piece>
-                        } @else {
-
-                        }
-                    </div>
-                }
-            </div>    
+<div id="board" #board>
+    @if (boardState$ | async; as piecesArray) {
+        <!-- Squares -->
+        @for (square of grid; track $index) {
+            <div class="board-square" [class.dark]="isDarkSquare($index)"></div>    
         }
+        <!-- Pieces -->
+         @for (piece of piecesArray; track $index) {
+            <app-piece 
+                [piece]=piece 
+                [style.top]="(piece.position.x * 12.5) + '%'"
+                [style.left]="(piece.position.y * 12.5) + '%'"
+                [boardRef]="board"
+                (moved)="onPieceMoved(piece, $event)"
+                ></app-piece>
+         }
     }
 </div>

@@ -1,10 +1,12 @@
 import { newPosition, Position } from "./Position";
 
 export abstract class ChessPiece {
+    id: number;
     isWhite: boolean;
     position: Position;
     
-    constructor(isWhite: boolean, posX: number, posY: number) {
+    constructor(id: number, isWhite: boolean, posX: number, posY: number) {
+        this.id = id;
         this.isWhite = isWhite;
         this.position = newPosition(posX, posY)
     }

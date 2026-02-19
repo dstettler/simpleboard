@@ -8,6 +8,10 @@ CORS(app)
 def mock_board():
     return jsonify({"fenString": "mocked"})
 
+@app.route('/api/update-board')
+def update_board():
+    return jsonify({"arbitraryValue": True})
+
 if __name__ == '__main__':
     app.run(debug=True)
 
