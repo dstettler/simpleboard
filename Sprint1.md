@@ -20,10 +20,11 @@
 - Login-spawned or authenticated game sessions
 - Authoritative game state, tampering prevented
 - User profile management
-- # Admin dashboard
-- # Login page
-- # Home page
-- # Logout
+- Admin dashboard
+- Login page
+- Home page
+- Logout
+- Frequently asked questions
 - 
 
 
@@ -35,5 +36,5 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI3MTI3ODg4MywtNTY4NTc3NTQ5XX0=
+eyJoaXN0b3J5IjpbLTE5MDYwOTg0NDAsLTU2ODU3NzU0OV19
 -->
