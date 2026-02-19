@@ -29,6 +29,9 @@
 
 
 ### What issues your team planned to address?
+- Full chess rules support for realistic play
+	- Game state representation
+- 
 
 ### Which ones were successfully completed?
 
@@ -36,5 +39,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE5MDYwOTg0NDAsLTU2ODU3NzU0OV19
+eyJoaXN0b3J5IjpbLTk1ODk1MDg0OSwtMTkwNjA5ODQ0MCwtNT
+Y4NTc3NTQ5XX0=
 -->
