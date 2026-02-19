@@ -11,9 +11,12 @@
         formControlName="email"
         [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
       />
-      <small *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-        Enter a valid email
-      </small>
+
+      @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
+        <small>
+          Enter a valid email
+        </small>
+      }
     </div>
 
     <!-- Password -->
@@ -24,20 +27,28 @@
         formControlName="password"
         [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
       />
-      <small *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-        Password must be at least 6 characters
-      </small>
+
+      @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
+        <small>
+          Password must be at least 6 characters
+        </small>
+      }
     </div>
 
     <!-- Authentication Error -->
-    <div class="auth-error" *ngIf="authError">
-      {{ authError }}
-    </div>
+    @if (authError) {
+      <div class="auth-error">
+        {{ authError }}
+      </div>
+    }
 
     <!-- Submit -->
     <button type="submit" [disabled]="loginForm.invalid || isLoading">
-      <span *ngIf="!isLoading">Sign In</span>
-      <span *ngIf="isLoading">Signing In...</span>
+      @if (!isLoading) {
+        <span>Sign In</span>
+      } @else {
+        <span>Signing In...</span>
+      }
     </button>
 
   </form>
