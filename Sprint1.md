@@ -43,7 +43,11 @@
 	- Add validation to register form
 - Login page
 	- Create login page UI
-	- 
+- Backend setup
+	- Project backend structure and HTTP server
+	- Standardized JSON response and error helpers
+	- HTTP middleware stack
+
 
 
 ### Which ones were successfully completed?
@@ -52,6 +56,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTUwNTU5NzI4MCwtMTkwNjA5ODQ0MCwtNT
-Y4NTc3NTQ5XX0=
+eyJoaXN0b3J5IjpbMTY2OTgwMjc1MiwxNTA1NTk3MjgwLC0xOT
+A2MDk4NDQwLC01Njg1Nzc1NDldfQ==
 -->
