@@ -1,6 +1,6 @@
 # Simpleboard Backend
 
-Go backend server for the Simpleboard chess application, built with Chi router, GORM, and SQLite.
+Go backend server for the Simpleboard chess application.
 
 ## Directory Structure
 
@@ -40,10 +40,12 @@ The server starts on port **8080** by default.
 |----------------|--------------------------|--------------------------------|
 | `PORT`         | `8080`                   | HTTP server port               |
 | `DB_PATH`      | `./simpleboard.db`       | SQLite database file path      |
-| `CORS_ORIGINS` | `http://localhost:4200`   | Comma-separated allowed origins|
+| `CORS_ORIGINS` | `http://localhost:4200`  | Comma-separated allowed origins|
 
 ## API Endpoints
 
 | Method | Path           | Description          |
 |--------|----------------|----------------------|
 | GET    | `/api/health`  | Health check         |
+| POST   | `/api/register`| Register account     |
+
