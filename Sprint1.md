@@ -22,7 +22,9 @@
 - User profile management
 - Admin dashboard
 - Login page
+- Landing page
 - Home page
+- Game Page
 - Logout
 - Frequently asked questions
 - Daily game streak
@@ -51,7 +53,9 @@
 
 
 ### Which ones were successfully completed?
-- Created the login page UI
+- Created the login page UI and redirect
+- Game board creation and styling
+- Initial piece movability
 
 ### Which ones didn't and why?
 
