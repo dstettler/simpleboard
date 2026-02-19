@@ -60,11 +60,12 @@
 - Standardized JSON response and error helpers
 
 ### Which ones didn't and why?
+These were pushed to Sprint 2 
 - Game state representation
-- 
+- HTTP middleware stack
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY0OTMyNzMwMSwxNjA2NTUyNTY3LDEzND
-U1NDgyMTMsNjgwOTYyNjY3LDE2Njk4MDI3NTIsMTUwNTU5NzI4
-MCwtMTkwNjA5ODQ0MCwtNTY4NTc3NTQ5XX0=
+eyJoaXN0b3J5IjpbLTE3NDI5MzYzOTcsMTYwNjU1MjU2NywxMz
+Q1NTQ4MjEzLDY4MDk2MjY2NywxNjY5ODAyNzUyLDE1MDU1OTcy
+ODAsLTE5MDYwOTg0NDAsLTU2ODU3NzU0OV19
 -->
