@@ -31,7 +31,12 @@
 ### What issues your team planned to address?
 - Full chess rules support for realistic play
 	- Game state representation
-- 
+- Graphical chess board initialization
+	- Create game page and route
+	- Define board coordinate system
+	- Board renders on game page
+		- Create base piece class
+		- # Create Board component
 
 ### Which ones were successfully completed?
 
@@ -39,6 +44,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk1ODk1MDg0OSwtMTkwNjA5ODQ0MCwtNT
-Y4NTc3NTQ5XX0=
+eyJoaXN0b3J5IjpbLTE1MTExMjM3ODQsLTE5MDYwOTg0NDAsLT
+U2ODU3NzU0OV19
 -->
