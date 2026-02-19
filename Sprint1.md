@@ -40,7 +40,11 @@
 		- Styling the Chessboard
 - Create a user account
 	- Create register page UI
+	- Add validation to register form
+- Login page
+	- Create login page UI
 	- 
+
 
 ### Which ones were successfully completed?
 
@@ -48,6 +52,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MDkzNzU4NTksLTE5MDYwOTg0NDAsLT
-U2ODU3NzU0OV19
+eyJoaXN0b3J5IjpbMTUwNTU5NzI4MCwtMTkwNjA5ODQ0MCwtNT
+Y4NTc3NTQ5XX0=
 -->
