@@ -1,0 +1,31 @@
+#board {
+    width: 50vw;
+    height: 95vh;
+    margin: 10px;
+    border: 2px solid #808080;
+    flex-direction: column;
+    display: flex;
+}
+
+.board-row {
+    flex-direction: row;
+    display: flex;
+    height: 100%;
+}
+
+.board-square {
+    float: left;
+    width: 12.5%;
+    height: 100%;
+    padding: 2px;
+    aspect-ratio: 1/1;
+    background-color: #fff;
+}
+
+.board-row:nth-of-type(even) .board-square:nth-of-type(even) {
+    background-color: black;
+}
+
+.board-row:nth-of-type(odd) .board-square:nth-of-type(odd) {
+    background-color: black;
+}
