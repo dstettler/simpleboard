@@ -20,6 +20,11 @@
 - Login-spawned or authenticated game sessions
 - Authoritative game state, tampering prevented
 - User profile management
+- # Admin dashboard
+- # Login page
+- # Home page
+- # Logout
+- 
 
 
 ### What issues your team planned to address?
@@ -30,5 +35,5 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTU2ODU3NzU0OV19
+eyJoaXN0b3J5IjpbLTI3MTI3ODg4MywtNTY4NTc3NTQ5XX0=
 -->
