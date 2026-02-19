@@ -36,7 +36,11 @@
 	- Define board coordinate system
 	- Board renders on game page
 		- Create base piece class
-		- # Create Board component
+		- Create Board component
+		- Styling the Chessboard
+- Create a user account
+	- Create register page UI
+	- 
 
 ### Which ones were successfully completed?
 
@@ -44,6 +48,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1MTExMjM3ODQsLTE5MDYwOTg0NDAsLT
+eyJoaXN0b3J5IjpbLTE4MDkzNzU4NTksLTE5MDYwOTg0NDAsLT
 U2ODU3NzU0OV19
 -->
