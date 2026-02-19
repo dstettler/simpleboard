@@ -51,6 +51,7 @@
 
 
 ### Which ones were successfully completed?
+- Created the login page UI
 
 ### Which ones didn't and why?
 
