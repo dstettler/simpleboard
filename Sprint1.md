@@ -25,7 +25,7 @@
 - Home page
 - Logout
 - Frequently asked questions
-- 
+- Daily game streak
 
 
 ### What issues your team planned to address?
@@ -56,6 +56,6 @@
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY2OTgwMjc1MiwxNTA1NTk3MjgwLC0xOT
-A2MDk4NDQwLC01Njg1Nzc1NDldfQ==
+eyJoaXN0b3J5IjpbNjgwOTYyNjY3LDE2Njk4MDI3NTIsMTUwNT
+U5NzI4MCwtMTkwNjA5ODQ0MCwtNTY4NTc3NTQ5XX0=
 -->
