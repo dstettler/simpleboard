@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 
-import { ChessPiece, getPieceFromFENCharacter } from './pieces/ChessPiece';
+import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { Position } from './pieces/Position';
 import { mockPositions } from './BoardState';
 
@@ -75,7 +75,7 @@ export class BoardLoadService {
     for (const rank of placementRanks) {
       for (const char of rank) {
         if (Number.isNaN(parseInt(char))) {
-          pieces.push(getPieceFromFENCharacter(char, currentId, currentX, currentY));
+          pieces.push(getPieceFromFenCharacter(char, currentId, currentX, currentY));
           currentId++;
           currentY++;
         } else {

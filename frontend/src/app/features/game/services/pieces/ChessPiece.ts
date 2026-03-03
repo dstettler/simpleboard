@@ -86,7 +86,7 @@ export class Queen extends ChessPiece {
     }
 }
 
-export function getPieceFromFENCharacter(char: string, id: number, x: number, y: number): ChessPiece {
+export function getPieceFromFenCharacter(char: string, id: number, x: number, y: number): ChessPiece {
     const pieceConstructors = {
         P: Pawn,
         N: Knight,
