@@ -85,3 +85,24 @@ export class Queen extends ChessPiece {
         return [];
     }
 }
+
+export function getPieceFromFENCharacter(char: string, id: number, x: number, y: number): ChessPiece {
+    const pieceConstructors = {
+        P: Pawn,
+        N: Knight,
+        B: Bishop,
+        R: Rook,
+        Q: Queen,
+        K: King
+    }
+
+    const pieceCtor = pieceConstructors[char.toUpperCase() as keyof typeof pieceConstructors];
+
+    // This case should never be hit, since we validate the FEN string before calling this function. 
+    // Just in case something goes wrong return *something*.
+    if (pieceCtor == undefined) {
+        return new Pawn(-1,true,0,0);
+    }
+    
+    return new pieceCtor(id, char == char.toUpperCase(), x, y);
+}

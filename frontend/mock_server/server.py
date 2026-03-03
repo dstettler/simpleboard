@@ -6,7 +6,7 @@ CORS(app)
 
 @app.route('/api/mock-board')
 def mock_board():
-    return jsonify({"fenString": "mocked"})
+    return jsonify({"fenString": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"})
 
 @app.route('/api/update-board')
 def update_board():
