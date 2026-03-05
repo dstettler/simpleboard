@@ -5,6 +5,7 @@ import { map, Observable } from 'rxjs';
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { Position } from './pieces/Position';
 import { mockPositions } from './BoardState';
+import { API_ENDPOINT } from '../../../app.constants';
 
 interface BoardApiRequest {
   fenString: string
@@ -27,13 +28,13 @@ export class BoardLoadService {
    */
   boardLoad(): Observable<ChessPiece[]> {
     // Returns an observable after sequentially decoding JSON string and filtering into the map via rxjs pipe.
-    return this.http.get<BoardApiRequest>(`http://127.0.0.1:5000/api/mock-board`).pipe(
+    return this.http.get<BoardApiRequest>(`${API_ENDPOINT}/api/mock-board`).pipe(
       map(state => this.fenDecode(state.fenString))
     );
   }
 
   updatePiecePosition(piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
-    return this.http.get<UpdatedRequest>(`http://127.0.0.1:5000/api/update-board`).pipe(
+    return this.http.get<UpdatedRequest>(`${API_ENDPOINT}/api/update-board`).pipe(
       map(_state => this.updatePos(piece, newPos))
     )
   }
