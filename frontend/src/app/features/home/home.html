@@ -1,0 +1,183 @@
+<div class="min-h-screen bg-[#0a0a0a] text-white">
+  <!-- Navbar -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-md">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
+      <div class="text-xl font-semibold tracking-wide">
+        ♟ SimpleBoard
+      </div>
+
+      <div class="hidden items-center gap-8 text-sm font-medium md:flex">
+        <a routerLink="/" class="text-white/80 transition hover:text-white">Home</a>
+        <a routerLink="/login" class="text-white/80 transition hover:text-white">Login</a>
+        <a routerLink="/dashboard" class="text-white/80 transition hover:text-white">Dashboard</a>
+        <a href="#features" class="text-white/80 transition hover:text-white">Features</a>
+        <a href="#about" class="text-white/80 transition hover:text-white">About</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="relative flex min-h-[92vh] items-center justify-center overflow-hidden px-6 text-center">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_45%)]"></div>
+
+    <div class="relative z-10 mx-auto max-w-4xl">
+      <p class="mb-4 text-sm uppercase tracking-[0.35em] text-white/50">
+        Modern Chess Experience
+      </p>
+
+      <h1 class="hero-title text-5xl font-bold leading-tight text-white sm:text-6xl md:text-7xl">
+        Play Chess
+        <span class="block text-white/80">With Focus, Style, and Strategy</span>
+      </h1>
+
+      <p class="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/60 sm:text-lg">
+        Challenge players, study positions, and experience a clean chess platform
+        designed for clarity, competition, and growth.
+      </p>
+
+      <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <a
+          routerLink="/login"
+          class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
+        >
+          Play Now
+        </a>
+
+        <a
+          href="#features"
+          class="rounded-full border border-white/20 px-8 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/5"
+        >
+          Explore Features
+        </a>
+      </div>
+
+      <div class="mt-16 flex justify-center">
+        <div class="grid grid-cols-8 overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+          @for (square of [
+            '♜','♞','♝','♛','♚','♝','♞','♜',
+            '♟','♟','♟','♟','♟','♟','♟','♟',
+            '','','','','','','','',
+            '','','','','','','','',
+            '','','','','','','','',
+            '','','','','','','','',
+            '♙','♙','♙','♙','♙','♙','♙','♙',
+            '♖','♘','♗','♕','♔','♗','♘','♖'
+          ]; track $index) {
+            <div
+              class="flex h-10 w-10 items-center justify-center text-lg sm:h-12 sm:w-12 sm:text-xl"
+              [class.bg-[#f5f5f5]]="((Math.floor($index / 8) + ($index % 8)) % 2 === 0)"
+              [class.bg-[#2b2b2b]]="((Math.floor($index / 8) + ($index % 8)) % 2 !== 0)"
+              [class.text-black]="((Math.floor($index / 8) + ($index % 8)) % 2 === 0)"
+              [class.text-white]="((Math.floor($index / 8) + ($index % 8)) % 2 !== 0)"
+            >
+              {{ square }}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="mx-auto max-w-7xl px-6 py-24 lg:px-10">
+    <div class="mb-12 text-center">
+      <p class="text-sm uppercase tracking-[0.3em] text-white/40">Features</p>
+      <h2 class="mt-3 text-3xl font-semibold sm:text-4xl">Built for players who want more</h2>
+      <p class="mx-auto mt-4 max-w-2xl text-white/55">
+        A focused chess platform experience with modern design, smooth interaction,
+        and room to grow into a complete competitive system.
+      </p>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-3">
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <div class="mb-4 text-3xl">♞</div>
+        <h3 class="text-xl font-semibold">Play Live</h3>
+        <p class="mt-3 text-sm leading-6 text-white/55">
+          Start games quickly and enjoy a clean interface designed for focus and gameplay.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <div class="mb-4 text-3xl">♜</div>
+        <h3 class="text-xl font-semibold">Track Progress</h3>
+        <p class="mt-3 text-sm leading-6 text-white/55">
+          Review your account activity, match results, and performance over time.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <div class="mb-4 text-3xl">♛</div>
+        <h3 class="text-xl font-semibold">Stay Organized</h3>
+        <p class="mt-3 text-sm leading-6 text-white/55">
+          Navigate through games, dashboards, and future features with a simple structure.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About / content while scrolling -->
+  <section id="about" class="border-y border-white/10 bg-white/[0.02] px-6 py-24 lg:px-10">
+    <div class="mx-auto grid max-w-7xl gap-12 md:grid-cols-2 md:items-center">
+      <div>
+        <p class="text-sm uppercase tracking-[0.3em] text-white/40">About the platform</p>
+        <h2 class="mt-3 text-3xl font-semibold sm:text-4xl">
+          Designed to feel modern, minimal, and competitive
+        </h2>
+        <p class="mt-6 text-base leading-8 text-white/60">
+          This project aims to create a chess platform where players can log in,
+          manage games, view their activity, and eventually play in a fully interactive
+          environment. The design focuses on readability, structure, and a premium visual feel.
+        </p>
+        <p class="mt-4 text-base leading-8 text-white/60">
+          With Angular on the frontend and Go on the backend, the platform is being
+          built to support both clean UI development and scalable game logic.
+        </p>
+      </div>
+
+      <div class="grid gap-4">
+        <div class="rounded-2xl border border-white/10 bg-black p-6">
+          <p class="text-sm text-white/40">Current focus</p>
+          <h3 class="mt-2 text-xl font-semibold">Authentication and core pages</h3>
+        </div>
+
+        <div class="rounded-2xl border border-white/10 bg-black p-6">
+          <p class="text-sm text-white/40">Next milestone</p>
+          <h3 class="mt-2 text-xl font-semibold">Interactive board and game state</h3>
+        </div>
+
+        <div class="rounded-2xl border border-white/10 bg-black p-6">
+          <p class="text-sm text-white/40">Long-term goal</p>
+          <h3 class="mt-2 text-xl font-semibold">A complete polished chess experience</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="px-6 py-24 lg:px-10">
+    <div class="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/[0.03] px-8 py-16 text-center">
+      <p class="text-sm uppercase tracking-[0.3em] text-white/40">Get started</p>
+      <h2 class="mt-4 text-3xl font-semibold sm:text-4xl">
+        Enter the board and begin your next match
+      </h2>
+      <p class="mx-auto mt-4 max-w-2xl text-white/55">
+        Sign in to continue building your chess journey and explore the platform experience.
+      </p>
+
+      <div class="mt-8">
+        <a
+          routerLink="/login"
+          class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
+        >
+          Go to Login
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/10 px-6 py-8 text-center text-sm text-white/40">
+    © 2026 SimpleBoard · Built for modern chess play
+  </footer>
+</div>

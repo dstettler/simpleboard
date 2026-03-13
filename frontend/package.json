@@ -23,7 +23,6 @@
   "private": true,
   "packageManager": "npm@11.8.0",
   "dependencies": {
-    "@angular/cdk": "~21.1.5",
     "@angular/common": "^21.1.0",
     "@angular/compiler": "^21.1.0",
     "@angular/core": "^21.1.0",
@@ -35,10 +34,13 @@
   },
   "devDependencies": {
     "@angular/build": "^21.1.2",
-    "@angular/cdk": "^21.1.5",
+    "@angular/cdk": "^21.2.1",
     "@angular/cli": "^21.1.2",
     "@angular/compiler-cli": "^21.1.0",
+    "autoprefixer": "^10.4.27",
     "jsdom": "^27.1.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.17",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }
