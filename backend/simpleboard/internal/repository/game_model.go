@@ -1,4 +1,4 @@
-package game
+package repository
 
 import (
 	//"gorm.io/gorm"
