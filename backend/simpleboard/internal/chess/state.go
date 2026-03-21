@@ -28,6 +28,33 @@ type Board struct {
 	grid [8][8]string // 8x8
 }
 
+// Board to FEN string
+func (b Board) FEN() string {
+	fen := ""
+    for r := 0; r < 8; r++ {
+        empty := 0
+        for f := 0; f < 8; f++ {
+            sq := b.grid[r][f]
+            if sq == "." {
+                empty++
+            } else {
+                if empty > 0 {
+                    fen += fmt.Sprintf("%d", empty) // format the empty space number
+                    empty = 0
+                }
+                fen += sq
+            }
+        }
+        if empty > 0 {
+            fen += fmt.Sprintf("%d", empty)
+        }
+        if r < 7 {
+            fen += "/" // add rank delim
+        }
+    }
+    return fen
+}
+
 // Board print
 func (b Board) Print() {
 	for _, r := range b.grid {
@@ -57,6 +84,21 @@ func (game ChessGame) Print() {
 	fmt.Println("Halfmove:", game.HalfmoveClock)
 	fmt.Println("Fullmove:", game.FullmoveCount)
 	fmt.Println("Status:", game.Status)
+}
+
+// ChessGame to FEN string
+// Returns the assembled FEN string
+func (game ChessGame) FEN() string {
+    fen := game.Board.FEN() // get FEN component for board
+    components := []string{
+        fen,
+        game.Side,
+        game.Castle,
+        game.EPTS,
+        fmt.Sprintf("%d", game.HalfmoveClock),
+        fmt.Sprintf("%d", game.FullmoveCount),
+    }
+    return strings.Join(components, " ")
 }
 
 func (s Status) String() string {

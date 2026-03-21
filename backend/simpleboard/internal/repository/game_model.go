@@ -13,6 +13,7 @@ type Game struct {
 	BlackPlayerID uint      `json:"black_player_id"`
 	State         string    `json:"state"`
 	Status        string    `json:"status"`
+	Side          string    `gorm:"size:1; not null"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

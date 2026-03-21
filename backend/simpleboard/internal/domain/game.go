@@ -13,6 +13,7 @@ type Game struct {
 	BlackPlayerID uint
 	State         string
 	Status        string
+	Side          string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
