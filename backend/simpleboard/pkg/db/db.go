@@ -1,14 +1,12 @@
 package db
 
 import (
-    "log"
-    "gorm.io/driver/sqlite"
-    "gorm.io/gorm"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"log"
 
-    "simpleboard/pkg/config"
-	"simpleboard/internal/domain/game"
-	"simpleboard/internal/domain/user"
-
+	"simpleboard/internal/repository"
+	"simpleboard/pkg/config"
 )
 
 var DB *gorm.DB
@@ -23,15 +21,15 @@ func Connect(cfg *config.Config) {
 	}
 
 	// connect
-    db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
-    if err != nil {
-        log.Fatalf("failed to connect to database '%s': %v", db_path, err)
-    }
+	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect to database '%s': %v", db_path, err)
+	}
 
 	// perform migrations
 	err = db.AutoMigrate(
-		&game.ChessGame{},
-		&user.User{},
+		&repository.Game{},
+		&repository.User{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database '%s': %v", db_path, err)
