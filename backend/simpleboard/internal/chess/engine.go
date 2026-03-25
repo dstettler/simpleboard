@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"log"
 	"simpleboard/internal/utils"
 	"strings"
 )
@@ -8,17 +9,27 @@ import (
 // Initial game state FEN
 const StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+// Vectors for move patterns
+var knightVectors = [][2]int{{1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {-2, 1}, {2, -1}, {-2, -1}}
+var bishopVectors = [][2]int{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}}
+var rookVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+var kingVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
+
 // Generates legal moves from an array of possible move patterns
 func (g *ChessGame) LegalMoves() []Move {
 	plm := g.PositionMoves() // get possibly legal moves
 	moves := []Move{}
 
+	kr, kf := g.KingCoords(g.Side == "w")
+
 	for _, m := range plm {
 		copy := g.Copy()
-		copy.MakeMove(m)
+		copy.MakeMove(m) // make the possible move
 
-		// TODO: Check detection
-		moves = append(moves, m)
+		// check king
+		if !copy.IsAttacked(kr, kf) {
+			moves = append(moves, m)
+		}
 	}
 
 	return moves
@@ -128,7 +139,7 @@ func (g *ChessGame) generateKnightMoves(r, f int, white bool) []Move {
 	b := g.Board.grid
 
 	// define knight vectors
-	vecs := [][2]int{{1, 2}, {-1, 2}, {1, -2}, {-1, -2}, {2, 1}, {-2, 1}, {2, -1}, {-2, -1}}
+	vecs := knightVectors
 
 	// iterate through the applied vector sums to the position and check bounds
 	for _, v := range vecs {
@@ -191,14 +202,14 @@ func (g *ChessGame) generateVarLenMoves(r, f int, white bool, vecs [][2]int) []M
 // Generates possible moves from only patterns for bishops
 func (g *ChessGame) generateBishopMoves(r, f int, white bool) []Move {
 	// define bishop directions
-	vecs := [][2]int{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}}
+	vecs := bishopVectors
 	return g.generateVarLenMoves(r, f, white, vecs)
 }
 
 // Generates possible moves from only patterns for rooks
 func (g *ChessGame) generateRookMoves(r, f int, white bool) []Move {
 	// define rook directions
-	vecs := [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	vecs := rookVectors
 	return g.generateVarLenMoves(r, f, white, vecs)
 }
 
@@ -216,7 +227,7 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 	b := g.Board.grid
 
 	// define king vectors
-	vecs := [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
+	vecs := kingVectors
 
 	// iterate through the applied vector sums to the position and check bounds
 	for _, v := range vecs {
@@ -235,9 +246,27 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 			moves = append(moves, Move{r, f, nr, nf, true, false, ""})
 		}
 	}
-	// TODO: add castling logic
+	// TODO: add castling logic? or in LegalMoves()
 
 	return moves
+}
+
+// Gets the position coords of the king; simple linear search
+func (g *ChessGame) KingCoords(white bool) (int, int) {
+
+	b := g.Board.grid
+
+	p := "K"
+	if !white {
+		p = "k"
+	}
+
+	for r := 0; r < 8; r++ {
+		for f := 0; f < 8; f++ {
+			if b[r][f] == p { return r, f }
+		}
+	}
+	return -1, -1
 }
 
 // Makes a verified move to the ChessGame, updating the board
@@ -268,4 +297,103 @@ func (g *ChessGame) MakeMove(m Move) {
 		g.Side = "w"
 		g.FullmoveCount++
 	}
+}
+
+// function that checks if a particular piece is attacked
+func (g *ChessGame) IsAttacked(r, f int) bool {
+
+	if r < 0 || r > 7 || f < 0 || f > 7 {
+		log.Fatalf("Invalid coordinates to check attacked: r=%d, f=%d", r, f)
+	}
+
+	b := g.Board.grid
+
+	p := b[r][f]
+	if p == EMPTY {
+		return false
+	}
+
+	// define attacker color
+	white := !utils.IsUpper(p)
+
+	// check pawns
+	if !white {
+		if r > 0 && f > 0 && b[r-1][f-1] == "p" {
+			return true
+		} // left attack
+		if r > 0 && f < 7 && b[r-1][f+1] == "p" {
+			return true
+		} // right
+	} else {
+		if r < 7 && f > 0 && b[r+1][f-1] == "P" {
+			return true
+		} // left
+		if r < 7 && f < 7 && b[r+1][f+1] == "P" {
+			return true
+		} // right
+	}
+
+	// check knights
+	for _, v := range knightVectors {
+		nr, nf := r+v[0], f+v[1]
+		if nr < 0 || nr > 7 || nf < 0 || nf > 7 {
+			continue
+		} // out of bounds
+
+		if white && b[nr][nf] == "N" {
+			return true
+		}
+		if !white && b[nr][nf] == "n" {
+			return true
+		}
+	}
+
+	// check variable length attacks (bishops, rooks, and queens)
+	vecs := rookVectors
+	vecs = append(vecs, bishopVectors...)
+
+	for _, v := range vecs {
+
+		s := 1
+		nr, nf := int(r+(s*v[0])), int(f+(s*v[1]))
+
+		for nr >= 0 && nr <= 7 && nf >= 0 && nf <= 7 {
+			a := b[nr][nf]
+
+			if a != EMPTY {
+
+				// same color piece check
+				if (!white && utils.IsUpper(a)) || (white && utils.IsLower(a)) {
+					break
+				}
+
+				if white {
+					if a == "Q" {
+						return true
+					} // queen
+					if a == "B" && (v[0] != 0 && v[1] != 0) {
+						return true
+					} // diagonal path
+					if a == "R" && (v[0] == 0 || v[1] == 0) {
+						return true
+					} // straight path
+				} else {
+					if a == "q" {
+						return true
+					} // queen
+					if a == "b" && (v[0] != 0 && v[1] != 0) {
+						return true
+					} // diagonal path
+					if a == "r" && (v[0] == 0 || v[1] == 0) {
+						return true
+					} // straight path
+				}
+			}
+
+			s += 1
+			nr, nf = int(r+(s*v[0])), int(f+(s*v[1]))
+		}
+	}
+
+	return false
 }
