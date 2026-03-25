@@ -54,7 +54,7 @@ func TestStatusString(t *testing.T) {
 // ReadChessGame — starting position tests
 // ---------------------------------------
 func TestReadStartingPosition(t *testing.T) {
-	game := ReadChessGame(StartFEN)
+	game := ReadChessGame(StartFEN, nil, nil)
 
 	// The starting FEN should always give NotStarted status
 	if game.Status != NotStarted {
@@ -100,7 +100,7 @@ func TestReadStartingPosition(t *testing.T) {
 func TestReadAfterE4(t *testing.T) {
 	// Position after 1. e4
 	fen := "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
-	game := ReadChessGame(fen)
+	game := ReadChessGame(fen, nil, nil)
 
 	if game.Status != InProgress {
 		t.Errorf("expected InProgress, got %s", game.Status)
@@ -125,7 +125,7 @@ func TestReadAfterE4(t *testing.T) {
 func TestReadCastledPosition(t *testing.T) {
 	// White has castled kingside, black hasn't yet
 	fen := "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4"
-	game := ReadChessGame(fen)
+	game := ReadChessGame(fen, nil, nil)
 
 	// White already castled, so only black has castling rights
 	if game.Castle != "kq" {
@@ -144,7 +144,7 @@ func TestReadCastledPosition(t *testing.T) {
 func TestReadNoCastlingRights(t *testing.T) {
 	// Late middlegame — no castling rights for either side
 	fen := "r4rk1/pp2ppbp/2np1np1/q7/3PP1b1/2N1BN2/PPP1BPPP/R2Q1RK1 b - - 7 10"
-	game := ReadChessGame(fen)
+	game := ReadChessGame(fen, nil, nil)
 
 	if game.Castle != "-" {
 		t.Errorf("castle = %q, want \"-\" (no castling rights)", game.Castle)
@@ -160,7 +160,7 @@ func TestReadNoCastlingRights(t *testing.T) {
 func TestReadEndgamePosition(t *testing.T) {
 	// King + rook vs king endgame
 	fen := "8/8/8/4k3/8/8/2K5/7R w - - 0 50"
-	game := ReadChessGame(fen)
+	game := ReadChessGame(fen, nil, nil)
 
 	if game.Side != "w" {
 		t.Errorf("side = %q, want \"w\"", game.Side)
@@ -200,7 +200,7 @@ func TestReadEndgamePosition(t *testing.T) {
 func TestBoardAllEmpty(t *testing.T) {
 	// Hypothetical position: kings only (minimum legal-ish board)
 	fen := "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
-	game := ReadChessGame(fen)
+	game := ReadChessGame(fen, nil, nil)
 
 	// Two kings and 62 empty squares
 	if game.Board.grid[0][4] != "k" {
@@ -225,7 +225,7 @@ func TestBoardAllEmpty(t *testing.T) {
 
 func TestBoardFullRank(t *testing.T) {
 	// Rank 1 and 8 are fully packed with pieces (no digit shorthand)
-	game := ReadChessGame(StartFEN)
+	game := ReadChessGame(StartFEN, nil, nil)
 
 	// Back ranks should have no empty squares
 	for f := 0; f < 8; f++ {
@@ -305,7 +305,7 @@ func TestReadChessGameTable(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			game := ReadChessGame(tc.fen)
+			game := ReadChessGame(tc.fen, nil, nil)
 
 			if game.Side != tc.side {
 				t.Errorf("side = %q, want %q", game.Side, tc.side)
