@@ -1,7 +1,6 @@
 package domain
 
 import (
-	//"gorm.io/gorm"
 	"time"
 )
 
@@ -14,6 +13,8 @@ type Game struct {
 	State         string
 	Status        string
 	Side          string
+	NextMoves     []string
+	PrevMoves     []string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

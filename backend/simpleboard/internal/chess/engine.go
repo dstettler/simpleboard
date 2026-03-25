@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"errors"
 	"log"
 	"simpleboard/internal/utils"
 	"strings"
@@ -15,6 +16,46 @@ var bishopVectors = [][2]int{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}}
 var rookVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 var kingVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 
+// Move function. Generates legal moves and checks the submitted move against them
+// Performs the move on the ChessGame. If the game is in a winning state, change status.
+func (g *ChessGame) Move(moveStr string) error {
+
+	// check game Status
+	if !(g.Status == InProgress || g.Status == NotStarted) { return errors.New("Game is over.") }
+
+	// parse moveStr
+	m := ParseMoveStr(moveStr)
+
+	// generate legal moves from the game state
+	legalMoves := g.NextMoves
+
+	for _, lm := range legalMoves {
+		if m.SR == lm.SR && m.SF == lm.SF && m.TR == lm.TR && m.TF == lm.TF {
+			g.MakeMove(m) // makes the actual move
+			if g.Status == NotStarted { g.Status = InProgress }
+			g.PrevMoves = append(g.PrevMoves, m) // appends previous move
+
+			if g.HalfmoveClock >= 100 {
+				g.Status = Draw
+				return nil
+			}
+
+			legalMoves := g.LegalMoves() // generate next set of legal moves
+			if len(legalMoves) == 0 { // checkmate
+				if g.Side == "w" {
+					g.Status = WinBlack
+				} else {
+					g.Status = WinWhite
+				}
+			}
+			g.NextMoves = legalMoves
+			return nil
+		}
+	}
+
+	return nil
+}
+
 // Generates legal moves from an array of possible move patterns
 func (g *ChessGame) LegalMoves() []Move {
 	plm := g.PositionMoves() // get possibly legal moves
@@ -25,6 +66,11 @@ func (g *ChessGame) LegalMoves() []Move {
 	for _, m := range plm {
 		copy := g.Copy()
 		copy.MakeMove(m) // make the possible move
+
+		// check if king has to be relocated
+		if strings.ToLower(copy.Board.grid[kr][kf]) != "k" {
+			kr, kf = copy.KingCoords(g.Side == "w")
+		}
 
 		// check king
 		if !copy.IsAttacked(kr, kf) {
@@ -285,7 +331,7 @@ func (g *ChessGame) MakeMove(m Move) {
 
 	// reset halfmove clock
 	if m.Capture || strings.ToLower(p) == "p" {
-		g.HalfmoveClock = 0
+		g.HalfmoveClock = 1
 	} else {
 		g.HalfmoveClock++
 	}

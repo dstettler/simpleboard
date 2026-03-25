@@ -78,9 +78,13 @@ func (b Board) FEN() string {
 
 // Board print
 func (b Board) Print() {
+	rn := 8
+	files := "/ a b c d e f g h"
 	for _, r := range b.grid {
-		fmt.Println(strings.Join(r[:], " "))
+		fmt.Printf("%d %s\n", rn, strings.Join(r[:], " "))
+		rn--
 	}
+	fmt.Println(files)
 }
 
 // Go type for a single move on the board
@@ -107,7 +111,9 @@ func ParseMoveStr(s string) Move {
 
 	// only indicates the possibility of a castling move (matches the pattern).
 	// If applied, must be able to castle
-	if s == "e1g1" || s == "e1c1" || s == "e8g8" || s == "e8c8" { castling = true }
+	if s == "e1g1" || s == "e1c1" || s == "e8g8" || s == "e8c8" {
+		castling = true
+	}
 
 	if s[2:3] == "x" {
 		capture = true
@@ -120,13 +126,13 @@ func ParseMoveStr(s string) Move {
 		promo = s[length-1:]
 	}
 
-	return Move {
-		SR: sr,
-		SF: sf,
-		TR: tr,
-		TF: tf,
-		Capture: capture,
-		Castling: castling,
+	return Move{
+		SR:        sr,
+		SF:        sf,
+		TR:        tr,
+		TF:        tf,
+		Capture:   capture,
+		Castling:  castling,
 		Promotion: promo,
 	}
 }
@@ -156,6 +162,8 @@ type ChessGame struct {
 	HalfmoveClock int    // halfmove clock; 50 move draw rule
 	FullmoveCount int    // fullmove counter
 	Status        Status // status indicator
+	NextMoves     []Move // list of next possible legal moves for the game state
+	PrevMoves     []Move // list of moves made in the game
 }
 
 // Create a deep copy of the ChessGame
@@ -168,6 +176,8 @@ func (orig ChessGame) Copy() ChessGame {
 		HalfmoveClock: orig.HalfmoveClock,
 		FullmoveCount: orig.FullmoveCount,
 		Status:        orig.Status,
+		NextMoves:     orig.NextMoves,
+		PrevMoves:     orig.PrevMoves,
 	}
 	return cg
 }
@@ -181,6 +191,20 @@ func (game ChessGame) Print() {
 	fmt.Println("Halfmove:", game.HalfmoveClock)
 	fmt.Println("Fullmove:", game.FullmoveCount)
 	fmt.Println("Status:", game.Status)
+
+	nextMovesStr := []string{}
+	for _, m := range game.NextMoves {
+		nextMovesStr = append(nextMovesStr, m.WriteMoveStr())
+	}
+
+	prevMovesStr := []string{}
+	for _, m := range game.PrevMoves {
+		prevMovesStr = append(prevMovesStr, m.WriteMoveStr())
+	}
+
+	fmt.Println("Next Moves: ", nextMovesStr)
+
+	fmt.Println("Previous Moves: ", prevMovesStr)
 }
 
 // ChessGame to FEN string
@@ -216,9 +240,9 @@ func (s Status) String() string {
 }
 
 // FEN string to ChessGame function
-// Takes an FEN string and parses it,
+// Takes an FEN string and moves lists and parses it,
 // returning the populated ChessGame
-func ReadChessGame(fenStr string) ChessGame {
+func ReadChessGame(fenStr string, nextMovesStr []string, prevMovesStr []string) ChessGame {
 
 	// parse simple fields
 	var b Board
@@ -235,6 +259,17 @@ func ReadChessGame(fenStr string) ChessGame {
 	fullmoveCount, err := strconv.Atoi(fields[5])
 	if err != nil {
 		log.Fatalf("Fullmove count '%s' is invalid.", fields[5])
+	}
+
+	// populate the moves lists
+	nextMoves := []Move{}
+	for _, m := range nextMovesStr {
+		nextMoves = append(nextMoves, ParseMoveStr(m))
+	}
+
+	prevMoves := []Move{}
+	for _, m := range prevMovesStr {
+		prevMoves = append(prevMoves, ParseMoveStr(m))
 	}
 
 	// only two statuses possible during the reading stage
@@ -281,5 +316,7 @@ func ReadChessGame(fenStr string) ChessGame {
 		HalfmoveClock: halfclock,
 		FullmoveCount: fullmoveCount,
 		Status:        status,
+		NextMoves:     nextMoves,
+		PrevMoves:     prevMoves,
 	}
 }
