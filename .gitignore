@@ -6,3 +6,6 @@ tmp/
 *.exe
 *.db
 env.sh
+# Cypress
+cypress/
+cypress.config.ts

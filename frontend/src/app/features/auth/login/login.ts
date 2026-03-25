@@ -11,10 +11,13 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-
   loginForm: FormGroup;
+  registerForm: FormGroup;
+
   authError: string = '';
+  successMessage: string = '';
   isLoading: boolean = false;
+  isRegisterMode: boolean = false;
 
   private testUser = {
     email: 'test@chess.com',
@@ -26,19 +29,35 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+
+    this.registerForm = this.fb.group({
+      userId: ['', [Validators.required, Validators.minLength(3)]],
+      name: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  toggleMode() {
+    this.isRegisterMode = !this.isRegisterMode;
+    this.authError = '';
+    this.successMessage = '';
+    this.isLoading = false;
   }
 
   onSubmit() {
-
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
     this.authError = '';
+    this.successMessage = '';
     this.isLoading = true;
 
     const { email, password } = this.loginForm.value;
 
     setTimeout(() => {
-
       if (email === this.testUser.email && password === this.testUser.password) {
         this.router.navigate(['/dashboard']);
       } else {
@@ -46,7 +65,26 @@ export class LoginComponent {
       }
 
       this.isLoading = false;
-
     }, 1000);
   }
+
+  onRegister() {
+  if (this.registerForm.invalid) {
+    this.registerForm.markAllAsTouched();
+    return;
+  }
+
+  this.authError = '';
+  this.successMessage = '';
+  this.isLoading = true;
+
+  setTimeout(() => {
+    console.log('Registered user:', this.registerForm.value);
+
+    this.isLoading = false;
+    this.successMessage = 'Successfully Registered';
+
+    this.registerForm.reset();
+  }, 1000);
+}
 }

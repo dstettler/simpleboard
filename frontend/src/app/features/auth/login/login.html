@@ -1,55 +1,107 @@
 <div class="login-container">
-  <h2>Login</h2>
+  <h2>@if (!isRegisterMode) { Login } @else { Register }</h2>
 
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  @if (!isRegisterMode) {
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" />
 
-    <!-- Email -->
-    <div class="form-group">
-      <label>Email</label>
-      <input 
-        type="email" 
-        formControlName="email"
-        [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-      />
-
-      @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
-        <small>
-          Enter a valid email
-        </small>
-      }
-    </div>
-
-    <!-- Password -->
-    <div class="form-group">
-      <label>Password</label>
-      <input 
-        type="password" 
-        formControlName="password"
-        [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-      />
-
-      @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
-        <small>
-          Password must be at least 6 characters
-        </small>
-      }
-    </div>
-
-    <!-- Authentication Error -->
-    @if (authError) {
-      <div class="auth-error">
-        {{ authError }}
+        @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
+          <small>Enter a valid email</small>
+        }
       </div>
-    }
 
-    <!-- Submit -->
-    <button type="submit" [disabled]="loginForm.invalid || isLoading">
-      @if (!isLoading) {
-        <span>Sign In</span>
-      } @else {
-        <span>Signing In...</span>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" formControlName="password" />
+
+        @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
+          <small>Password must be at least 6 characters</small>
+        }
+      </div>
+
+      @if (authError) {
+        <div class="auth-error">{{ authError }}</div>
       }
-    </button>
 
-  </form>
+      @if (successMessage) {
+        <div class="success-msg">{{ successMessage }}</div>
+      }
+
+      <button type="submit" [disabled]="loginForm.invalid || isLoading">
+        @if (!isLoading) {
+          <span>Sign In</span>
+        } @else {
+          <span>Signing In...</span>
+        }
+      </button>
+    </form>
+  }
+
+  @if (isRegisterMode) {
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+      <div class="form-group">
+        <label>User ID</label>
+        <input type="text" formControlName="userId" />
+
+        @if (registerForm.get('userId')?.touched && registerForm.get('userId')?.invalid) {
+          <small>User ID must be at least 3 characters</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" formControlName="name" />
+
+        @if (registerForm.get('name')?.touched && registerForm.get('name')?.invalid) {
+          <small>Name is required</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" />
+
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+          <small>Enter a valid email</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" formControlName="password" />
+
+        @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+          <small>Password must be at least 6 characters</small>
+        }
+      </div>
+
+      @if (authError) {
+        <div class="auth-error">{{ authError }}</div>
+      }
+
+      @if (successMessage) {
+        <div class="success-msg">{{ successMessage }}</div>
+      }
+
+      <button type="submit" [disabled]="registerForm.invalid || isLoading">
+        @if (!isLoading) {
+          <span>Register</span>
+        } @else {
+          <span>Creating Account...</span>
+        }
+      </button>
+    </form>
+  }
+
+  <div class="toggle-text">
+    @if (!isRegisterMode) {
+      <span>Don't have an account?</span>
+      <button type="button" class="link-button" (click)="toggleMode()">Register</button>
+    } @else {
+      <span>Already have an account?</span>
+      <button type="button" class="link-button" (click)="toggleMode()">Login</button>
+    }
+  </div>
 </div>
