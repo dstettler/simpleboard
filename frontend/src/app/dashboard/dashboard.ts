@@ -5,11 +5,27 @@ import { CommonModule } from '@angular/common';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="dashboard">
-      <h1>Welcome to the Chess Arena ♟️</h1>
-      <p>You are successfully logged in.</p>
-    </div>
-  `
+  templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css'
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+  stats = {
+    games: 42,
+    wins: 25,
+    losses: 17,
+    winRate: 59,
+    timePlayed: '12h 35m'
+  };
+
+  get winRank(): { icon: string; title: string } {
+    const rate = this.stats.winRate;
+
+    if (rate < 40) return { icon: '♙', title: 'Pawn' };
+    if (rate < 55) return { icon: '♘', title: 'Knight' };
+    if (rate < 65) return { icon: '♗', title: 'Bishop' };
+    if (rate < 75) return { icon: '♖', title: 'Rook' };
+    if (rate < 90) return { icon: '♕', title: 'Queen' };
+
+    return { icon: '♔', title: 'King' };
+  }
+}

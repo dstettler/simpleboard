@@ -1,4 +1,105 @@
-<div class="dashboard">
-  <h1>Welcome to the Chess Arena ♟️</h1>
-  <p>You are successfully logged in.</p>
+<div class="min-h-screen bg-[#0a0a0a] text-white px-6 py-24">
+
+  <div class="mx-auto max-w-7xl">
+
+    <h1 class="text-4xl font-semibold mb-12">
+      Dashboard
+    </h1>
+
+    <!-- Stats Grid -->
+    <div class="grid gap-6 md:grid-cols-4">
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <p class="text-sm text-white/40">Total Games</p>
+        <h2 class="mt-2 text-3xl font-semibold">{{ stats.games }}</h2>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <p class="text-sm text-white/40">Wins</p>
+        <h2 class="mt-2 text-3xl font-semibold text-green-400">
+          {{ stats.wins }}
+        </h2>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <p class="text-sm text-white/40">Losses</p>
+        <h2 class="mt-2 text-3xl font-semibold text-red-400">
+          {{ stats.losses }}
+        </h2>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <p class="text-sm text-white/40">Win Rate</p>
+        <h2 class="mt-2 text-3xl font-semibold">
+          {{ stats.winRate }}%
+        </h2>
+      </div>
+
+    </div>
+
+    <!-- Time Played Section -->
+    <div class="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+
+      <p class="text-sm text-white/40">Total Time Played</p>
+
+      <h2 class="mt-3 text-2xl font-semibold">
+        {{ stats.timePlayed }}
+      </h2>
+
+    </div>
+
+    <!-- Future Section -->
+    <div class="mt-12 grid gap-6 md:grid-cols-2">
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <h3 class="text-xl font-semibold mb-3">Recent Activity</h3>
+        <p class="text-white/60 text-sm">
+          Your latest matches and activity will appear here.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+        <h3 class="text-xl font-semibold mb-3">Upcoming Features</h3>
+        <p class="text-white/60 text-sm">
+          Game analysis, rating system, and match history will be added in future updates.
+        </p>
+      </div>
+
+    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+  <div class="flex items-start justify-between">
+    <div>
+      <p class="text-sm text-white/40">Win Rate</p>
+      <h2 class="mt-2 text-3xl font-semibold">{{ stats.winRate }}%</h2>
+    </div>
+
+    <div class="rank-badge">
+      <span class="rank-icon">{{ winRank.icon }}</span>
+      <div class="text-right">
+        <p class="text-xs uppercase tracking-[0.2em] text-white/40">Rank</p>
+        <p class="text-sm font-medium text-white/80">{{ winRank.title }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-5">
+    <div class="mb-2 flex items-center justify-between text-xs text-white/40">
+      <span>Progress</span>
+      <span>{{ stats.wins }}W / {{ stats.losses }}L</span>
+    </div>
+
+    <div class="h-3 w-full overflow-hidden rounded-full bg-white/10">
+      <div
+        class="progress-fill h-full rounded-full bg-gradient-to-r from-white to-white/70"
+        [style.width.%]="stats.winRate"
+      ></div>
+    </div>
+  </div>
+</div>
+
+  
+
+  
+</div>
+  </div>
+
 </div>
