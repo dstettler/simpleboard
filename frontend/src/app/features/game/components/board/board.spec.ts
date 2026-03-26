@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Board } from './board';
 import { API_ENDPOINT } from '../../../../app.constants';
 
-export const mockBoardStateResponse = { "fenString": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+export const mockBoardStateResponse = { "state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
 
 describe('Board', () => {
   let component: Board;
@@ -30,7 +30,7 @@ describe('Board', () => {
   });
 
   it('should create', () => {
-    const ex = httpMock.expectOne(`${API_ENDPOINT}/api/mock-board`);
+    const ex = httpMock.expectOne(`${API_ENDPOINT}/api/game`);
     ex.flush(mockBoardStateResponse);
 
     expect(component).toBeTruthy();

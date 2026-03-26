@@ -4,7 +4,7 @@ export abstract class ChessPiece {
     id: number;
     isWhite: boolean;
     position: Position;
-    
+
     constructor(id: number, isWhite: boolean, posX: number, posY: number) {
         this.id = id;
         this.isWhite = isWhite;
@@ -98,11 +98,11 @@ export function getPieceFromFenCharacter(char: string, id: number, x: number, y:
 
     const pieceCtor = pieceConstructors[char.toUpperCase() as keyof typeof pieceConstructors];
 
-    // This case should never be hit, since we validate the FEN string before calling this function. 
+    // This case should never be hit, since we validate the FEN string before calling this function.
     // Just in case something goes wrong return *something*.
     if (pieceCtor == undefined) {
         return new Pawn(-1,true,0,0);
     }
-    
+
     return new pieceCtor(id, char == char.toUpperCase(), x, y);
 }

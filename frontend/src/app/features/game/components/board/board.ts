@@ -17,12 +17,12 @@ export class Board {
   grid = Array.from({ length: 64 });
 
   private loadService = inject(BoardLoadService);
-  boardState$: Observable<ChessPiece[]> = this.loadService.boardLoad();
+  boardState$: Observable<ChessPiece[]> = this.loadService.boardLoad(0, 0);
 
   constructor() {}
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    this.boardState$ = this.loadService.updatePiecePosition(piece, target)
+    this.boardState$ = this.loadService.updatePiecePosition(0, 0, piece, target)
   }
 
   isDarkSquare(i: number): boolean {

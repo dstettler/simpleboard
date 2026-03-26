@@ -31,7 +31,7 @@ describe('Game', () => {
   });
 
   it('should create', () => {
-    const ex = httpMock.expectOne(`${API_ENDPOINT}/api/mock-board`);
+    const ex = httpMock.expectOne(`${API_ENDPOINT}/api/game`);
     ex.flush(mockBoardStateResponse);
 
     expect(component).toBeTruthy();

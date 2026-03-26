@@ -1,18 +1,28 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
-import { Position } from './pieces/Position';
-import { mockPositions } from './BoardState';
+import { Position, positionToAlgebraic } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
 
-interface BoardApiRequest {
-  fenString: string
+type GameRequest = {
+  action: string;
+  game_id: number;
+  player_id: number;
+  move?: string;
 }
 
-interface UpdatedRequest {
-  arbitraryValue: boolean
+type GameApiResponse = {
+  state: string;
+  status: string;
+  side: string;
+  next_moves: string[]
+  prev_moves: string[]
+}
+
+type GameApiError = {
+  error: string
 }
 
 @Injectable({
@@ -20,35 +30,75 @@ interface UpdatedRequest {
 })
 export class BoardLoadService {
   private http = inject(HttpClient);
-  
+
   positionsArray: ChessPiece[]|null = null;
 
   /**
    * @returns {Map<string, ChessPiece} Indexed map of pieces on board with key of "[Position.x],[Position.y]".
    */
-  boardLoad(): Observable<ChessPiece[]> {
+  boardLoad(gameId: number, playerId: number): Observable<ChessPiece[]> {
+    // Load initial state
+    const req: GameRequest = {
+      action: "state",
+      game_id: gameId,
+      player_id: playerId
+    };
+
+    return this.gameRequest(req);
+  }
+
+  gameRequest(reqBody: GameRequest): Observable<ChessPiece[]> {
     // Returns an observable after sequentially decoding JSON string and filtering into the map via rxjs pipe.
-    return this.http.get<BoardApiRequest>(`${API_ENDPOINT}/api/mock-board`).pipe(
-      map(state => this.fenDecode(state.fenString))
+    return this.http.post<GameApiResponse|GameApiError>(`${API_ENDPOINT}/api/game`, reqBody).pipe(
+      map(state => {
+        if ("error" in state) {
+          const err = state as GameApiError;
+          // Illegal operation
+          console.error(err.error);
+          if (this.positionsArray == null) {
+            return [];
+          } else {
+            return this.positionsArray;
+          }
+        } else {
+          const resp = state as GameApiResponse;
+          const ret = this.fenDecode(resp.state);
+          this.positionsArray = ret;
+          return this.fenDecode(resp.state);
+        }
+      })
     );
   }
 
-  updatePiecePosition(piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
-    return this.http.get<UpdatedRequest>(`${API_ENDPOINT}/api/update-board`).pipe(
-      map(_state => this.updatePos(piece, newPos))
-    )
-  }
-
-  private updatePos(piece: ChessPiece, newPos: Position): ChessPiece[] {
-    console.log(`${piece.id} new pos: ${newPos.x}, ${newPos.y}`)
-    if (this.positionsArray !== null) {
-      this.positionsArray[piece.id].position = newPos;
-    } else {
-      console.warn("Attempted to update pos before init")
-      this.positionsArray = mockPositions();
+  updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
+    let captureChar = '';
+    if (this.positionsArray) {
+      console.log(newPos);
+      for (const piece of this.positionsArray) {
+        const isSamePos = piece.position.x == newPos.x && piece.position.y == newPos.y;
+        if (isSamePos)
+          captureChar = 'x';
+      }
     }
 
-    return this.positionsArray;
+    const moveStr = `${positionToAlgebraic(piece.position)}${captureChar}${positionToAlgebraic(newPos)}`;
+    console.log(`Moving: ${moveStr}`);
+
+    const req: GameRequest = {
+      action: "move",
+      game_id: gameId,
+      player_id: playerId,
+      move: moveStr
+    };
+
+    const stateReq: GameRequest = {
+      action: "state",
+      game_id: gameId,
+      player_id: playerId,
+    };
+
+
+    return this.gameRequest(req).pipe(switchMap(() => this.gameRequest(stateReq)));
   }
 
   public fenDecode(fenString: string): ChessPiece[] {
@@ -81,7 +131,7 @@ export class BoardLoadService {
           currentY++;
         } else {
           const offset = parseInt(char);
-          currentY + offset;
+          currentY = currentY + offset;
         }
       }
 
@@ -100,7 +150,7 @@ export class BoardLoadService {
     if (ranks.length != 8) {
       return [false, `Invalid number of ranks: ${ranks.length}`];
     }
-    
+
     let placementFreqDict: { [key: string]: number } = {}
 
     for (const rank of ranks) {
@@ -150,7 +200,7 @@ export class BoardLoadService {
     if (fields.length != 6) {
       return [false, 'Invalid number of FEN fields'];
     }
-    
+
     // Placement
     const placementValidation = this.validatePlacementField(fields[0]);
     if (!placementValidation[0]) {
@@ -167,7 +217,7 @@ export class BoardLoadService {
     if (!castleRegex.test(fields[2])) {
       return [false, 'Invalid castle field'];
     }
-    
+
     // En passant
     const enPassantRegex = /^([a-hA-H][1-8])|-$/gm;
     if (!enPassantRegex.test(fields[3])) {
