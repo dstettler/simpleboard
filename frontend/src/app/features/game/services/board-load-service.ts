@@ -63,6 +63,8 @@ export class BoardLoadService {
           }
         } else {
           const resp = state as GameApiResponse;
+          const ret = this.fenDecode(resp.state);
+          this.positionsArray = ret;
           return this.fenDecode(resp.state);
         }
       })
@@ -70,7 +72,17 @@ export class BoardLoadService {
   }
 
   updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
-    const moveStr = `${positionToAlgebraic(piece.position)}${positionToAlgebraic(newPos)}`;
+    let captureChar = '';
+    if (this.positionsArray) {
+      console.log(newPos);
+      for (const piece of this.positionsArray) {
+        const isSamePos = piece.position.x == newPos.x && piece.position.y == newPos.y;
+        if (isSamePos)
+          captureChar = 'x';
+      }
+    }
+
+    const moveStr = `${positionToAlgebraic(piece.position)}${captureChar}${positionToAlgebraic(newPos)}`;
     console.log(`Moving: ${moveStr}`);
 
     const req: GameRequest = {
