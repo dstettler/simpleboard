@@ -15,7 +15,7 @@ type GameRequest = {
 }
 
 type GameApiResponse = {
-  fenString: string;
+  state: string;
   status: string;
   side: string;
   nextMoves: string[]
@@ -63,7 +63,7 @@ export class BoardLoadService {
           }
         } else {
           const resp = state as GameApiResponse;
-          return this.fenDecode(resp.fenString);
+          return this.fenDecode(resp.state);
         }
       })
     );
@@ -81,23 +81,6 @@ export class BoardLoadService {
     };
 
     return this.gameRequest(req);
-  }
-  // updatePiecePosition(piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
-  //   return this.http.get<UpdatedRequest>(`${API_ENDPOINT}/api/update-board`).pipe(
-  //     map(_state => this.updatePos(piece, newPos))
-  //   )
-  // }
-
-  private updatePos(piece: ChessPiece, newPos: Position): ChessPiece[] {
-    console.log(`${piece.id} new pos: ${newPos.x}, ${newPos.y}`)
-    if (this.positionsArray !== null) {
-      this.positionsArray[piece.id].position = newPos;
-    } else {
-      console.warn("Attempted to update pos before init")
-      this.positionsArray = mockPositions();
-    }
-
-    return this.positionsArray;
   }
 
   public fenDecode(fenString: string): ChessPiece[] {
@@ -130,7 +113,7 @@ export class BoardLoadService {
           currentY++;
         } else {
           const offset = parseInt(char);
-          currentY + offset;
+          currentY = currentY + offset;
         }
       }
 

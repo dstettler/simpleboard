@@ -104,7 +104,5 @@ export function getPieceFromFenCharacter(char: string, id: number, x: number, y:
         return new Pawn(-1,true,0,0);
     }
 
-    console.log(`${char} X: ${x}, Y:${y}`);
-
     return new pieceCtor(id, char == char.toUpperCase(), x, y);
 }

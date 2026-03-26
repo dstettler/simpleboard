@@ -17,9 +17,9 @@ def game():
   req = request.get_json()
   action = req['action']
   if action == 'state':
-    return jsonify({"fenString": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"})
+    return jsonify({"state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"})
   else:
-    return jsonify({"fenString": "rnbqkbnr/ppppppp1/p7/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"})
+    return jsonify({"state": "rnbqkbnr/1ppppppp/p7/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"})
 
 if __name__ == '__main__':
     app.run(debug=True)
