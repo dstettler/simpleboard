@@ -8,7 +8,7 @@ import (
 // Game is an instance of an active game session
 // Stores player IDs, game state, and timestamps
 type Game struct {
-	ID            uint           `gorm:"primaryKey" json:"id"`
+	ID            uint           `gorm:"uniqueIndex;primaryKey;autoIncrement`
 	WhitePlayerID uint           `json:"white_player_id"`
 	BlackPlayerID uint           `json:"black_player_id"`
 	State         string         `json:"state"`
