@@ -13,6 +13,16 @@
 - Added homepage
 - Fixed routing issues
 ### Backend
+- Built foundational chess engine
+  - Legal move generation
+  - Game state validator
+  - Checkmate detection
+- Added state elements to support engine
+  - Move list format for requests
+  - Pre-generating possible moves for frontend comparison
+- Added game state unit tests
+- Added password hashing
+- Added login API placeholder (for real auth changes)
 
 ## Tests (Frontend)
 ### Unit Tests
@@ -28,5 +38,35 @@
 - (pls fill these in idk what the files are called)
 
 ## Tests (Backend)
+```
+/internal/chess/
+=== RUN   TestStatusString
+--- PASS: TestStatusString (0.00s)
+=== RUN   TestReadStartingPosition
+--- PASS: TestReadStartingPosition (0.00s)
+=== RUN   TestReadAfterE4
+--- PASS: TestReadAfterE4 (0.00s)
+=== RUN   TestReadCastledPosition
+--- PASS: TestReadCastledPosition (0.00s)
+=== RUN   TestReadNoCastlingRights
+--- PASS: TestReadNoCastlingRights (0.00s)
+=== RUN   TestReadEndgamePosition
+--- PASS: TestReadEndgamePosition (0.00s)
+=== RUN   TestBoardAllEmpty
+--- PASS: TestBoardAllEmpty (0.00s)
+=== RUN   TestBoardFullRank
+--- PASS: TestBoardFullRank (0.00s)
+=== RUN   TestReadChessGameTable
+=== RUN   TestReadChessGameTable/start_position
+=== RUN   TestReadChessGameTable/after_1.e4
+=== RUN   TestReadChessGameTable/king_and_pawn_endgame
+=== RUN   TestReadChessGameTable/white_kingside_castling_only
+--- PASS: TestReadChessGameTable (0.00s)
+    --- PASS: TestReadChessGameTable/start_position (0.00s)
+    --- PASS: TestReadChessGameTable/after_1.e4 (0.00s)
+    --- PASS: TestReadChessGameTable/king_and_pawn_endgame (0.00s)
+    --- PASS: TestReadChessGameTable/white_kingside_castling_only (0.00s)
+PASS
+```
 
 ## Backend API Docs
