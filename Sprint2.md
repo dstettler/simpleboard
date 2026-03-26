@@ -49,6 +49,24 @@
 ## Tests (Backend)
 ```
 /internal/chess/
+=== RUN   TestKingCoordsStartPosition
+--- PASS: TestKingCoordsStartPosition (0.00s)
+=== RUN   TestKingCoordsMissingKing
+--- PASS: TestKingCoordsMissingKing (0.00s)
+=== RUN   TestMakeMoveUpdatesBoard
+--- PASS: TestMakeMoveUpdatesBoard (0.00s)
+=== RUN   TestMakeMoveHalfmoveClock
+--- PASS: TestMakeMoveHalfmoveClock (0.00s)
+=== RUN   TestMakeMoveFullmoveCounter
+--- PASS: TestMakeMoveFullmoveCounter (0.00s)
+=== RUN   TestMakeMoveCapture
+--- PASS: TestMakeMoveCapture (0.00s)
+=== RUN   TestMakeMoveSideToggle
+--- PASS: TestMakeMoveSideToggle (0.00s)
+=== RUN   TestPositionMovesStartCount
+--- PASS: TestPositionMovesStartCount (0.00s)
+=== RUN   TestLegalMovesStartCount
+--- PASS: TestLegalMovesStartCount (0.00s)
 === RUN   TestStatusString
 --- PASS: TestStatusString (0.00s)
 === RUN   TestReadStartingPosition
