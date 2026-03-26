@@ -35,7 +35,16 @@
 - BoardLoadService instantiates successfully
 - FEN string validation functions as expected
 ### Cypress Tests
-- (pls fill these in idk what the files are called)
+- `cypress/e2e/home.cy.ts`  
+  - Verifies the home page loads successfully
+  - Verifies navbar links are visible
+  - Verifies clicking the Login link from the navbar routes to the login page
+
+- `cypress/e2e/login.cy.ts`  
+  - Verifies the login page loads successfully
+  - Verifies validation errors appear when login fields are touched and left invalid
+  - Verifies the page can switch from login mode to register mode
+  - Verifies registration form submission shows the success message
 
 ## Tests (Backend)
 ```
