@@ -12,6 +12,7 @@ func RegisterRoutes() *gin.Engine {
 	r.GET("/api/health", handler.Health)
 	r.POST("/api/register", handler.Register)
 	r.POST("/api/login", handler.Login)
+	r.POST("/api/game", handler.Game)
 
 	return r
 }

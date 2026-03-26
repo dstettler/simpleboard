@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-// Initial game state FEN
-const StartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+const EMPTY = "."
 
 // Game status: different from game state, but is the
 // official status of the game. This informs the actual
@@ -23,16 +22,133 @@ const (
 	WinBlack
 )
 
-// Type representing game board in a `[rank][file]` index schema
+// Type representing game board in a `[In rank][In file]` index schema
 type Board struct {
 	grid [8][8]string // 8x8
 }
 
+// Chess algebra '[In rank][In file]' to coords converter from ascii
+func ParseCoords(s string) (int, int) {
+	if len(s) != 2 {
+		log.Fatalf("Invalid coordinates length: %d", len(s))
+	}
+	file := int(s[0] - 'a')            // parse first token as file
+	rank := (int(s[1]-'0') - 8) * (-1) // parse second as rank
+
+	return rank, file
+}
+
+// Coords to Chess algebra converter from ints
+func ParseAlg(r, f int) string {
+	files := []string{"a", "b", "c", "d", "e", "f", "g", "h"}
+
+	if r < 0 || r > 7 || f < 0 || f > 7 {
+		log.Fatalf("Invalid coordinates: %d, %d", r, f)
+	}
+
+	return files[f] + strconv.Itoa((r-8)*-1)
+}
+
+// Board to FEN string
+func (b Board) FEN() string {
+	fen := ""
+	for r := 0; r < 8; r++ {
+		empty := 0
+		for f := 0; f < 8; f++ {
+			sq := b.grid[r][f]
+			if sq == EMPTY {
+				empty++
+			} else {
+				if empty > 0 {
+					fen += fmt.Sprintf("%d", empty) // format the empty space number
+					empty = 0
+				}
+				fen += sq
+			}
+		}
+		if empty > 0 {
+			fen += fmt.Sprintf("%d", empty)
+		}
+		if r < 7 {
+			fen += "/" // add rank delim
+		}
+	}
+	return fen
+}
+
 // Board print
 func (b Board) Print() {
+	rn := 8
+	files := "/ a b c d e f g h"
 	for _, r := range b.grid {
-		fmt.Println(strings.Join(r[:], " "))
+		fmt.Printf("%d %s\n", rn, strings.Join(r[:], " "))
+		rn--
 	}
+	fmt.Println(files)
+}
+
+// Go type for a single move on the board
+type Move struct {
+	SR, SF    int
+	TR, TF    int
+	Capture   bool
+	Castling  bool
+	Promotion string
+}
+
+// Parses a move string and returns a populated Move
+func ParseMoveStr(s string) Move {
+	length := len(s)
+	if length < 4 || length > 6 {
+		log.Fatalf("Invalid move string with length %d - '%s'", len(s), s)
+	}
+
+	capture := false
+	castling := false
+	promo := ""
+	sr, sf := ParseCoords(s[0:2])
+	tr, tf := -1, -1
+
+	// only indicates the possibility of a castling move (matches the pattern).
+	// If applied, must be able to castle
+	if s == "e1g1" || s == "e1c1" || s == "e8g8" || s == "e8c8" {
+		castling = true
+	}
+
+	if s[2:3] == "x" {
+		capture = true
+		tr, tf = ParseCoords(s[3:5])
+	} else {
+		tr, tf = ParseCoords(s[2:4])
+	}
+
+	if (length <= 4 && !capture) || (length > 5 && capture) {
+		promo = s[length-1:]
+	}
+
+	return Move{
+		SR:        sr,
+		SF:        sf,
+		TR:        tr,
+		TF:        tf,
+		Capture:   capture,
+		Castling:  castling,
+		Promotion: promo,
+	}
+}
+
+// Writes move to a long-form notation string
+func (m Move) WriteMoveStr() string {
+	moveStr := ""
+	s := ParseAlg(m.SR, m.SF)
+	t := ParseAlg(m.TR, m.TF)
+	moveStr += s
+	if m.Capture {
+		moveStr += "x"
+	}
+	moveStr += t
+
+	return moveStr
 }
 
 // Go type for storing the game in memory. Produced
@@ -46,6 +162,24 @@ type ChessGame struct {
 	HalfmoveClock int    // halfmove clock; 50 move draw rule
 	FullmoveCount int    // fullmove counter
 	Status        Status // status indicator
+	NextMoves     []Move // list of next possible legal moves for the game state
+	PrevMoves     []Move // list of moves made in the game
+}
+
+// Create a deep copy of the ChessGame
+func (orig ChessGame) Copy() ChessGame {
+	cg := ChessGame{
+		Board:         orig.Board,
+		Side:          orig.Side,
+		Castle:        orig.Castle,
+		EPTS:          orig.EPTS,
+		HalfmoveClock: orig.HalfmoveClock,
+		FullmoveCount: orig.FullmoveCount,
+		Status:        orig.Status,
+		NextMoves:     orig.NextMoves,
+		PrevMoves:     orig.PrevMoves,
+	}
+	return cg
 }
 
 // Print the entire game details
@@ -57,8 +191,38 @@ func (game ChessGame) Print() {
 	fmt.Println("Halfmove:", game.HalfmoveClock)
 	fmt.Println("Fullmove:", game.FullmoveCount)
 	fmt.Println("Status:", game.Status)
+
+	nextMovesStr := []string{}
+	for _, m := range game.NextMoves {
+		nextMovesStr = append(nextMovesStr, m.WriteMoveStr())
+	}
+
+	prevMovesStr := []string{}
+	for _, m := range game.PrevMoves {
+		prevMovesStr = append(prevMovesStr, m.WriteMoveStr())
+	}
+
+	fmt.Println("Next Moves: ", nextMovesStr)
+
+	fmt.Println("Previous Moves: ", prevMovesStr)
 }
 
+// ChessGame to FEN string
+// Returns the assembled FEN string
+func (game ChessGame) FEN() string {
+	fen := game.Board.FEN() // get FEN component for board
+	components := []string{
+		fen,
+		game.Side,
+		game.Castle,
+		game.EPTS,
+		fmt.Sprintf("%d", game.HalfmoveClock),
+		fmt.Sprintf("%d", game.FullmoveCount),
+	}
+	return strings.Join(components, " ")
+}
+
+// Status to string function
 func (s Status) String() string {
 	switch s {
 	case NotStarted:
@@ -76,9 +240,9 @@ func (s Status) String() string {
 }
 
 // FEN string to ChessGame function
-// Takes an FEN string and parses it,
+// Takes an FEN string and moves lists and parses it,
 // returning the populated ChessGame
-func ReadChessGame(fenStr string) ChessGame {
+func ReadChessGame(fenStr string, nextMovesStr []string, prevMovesStr []string) ChessGame {
 
 	// parse simple fields
 	var b Board
@@ -95,6 +259,17 @@ func ReadChessGame(fenStr string) ChessGame {
 	fullmoveCount, err := strconv.Atoi(fields[5])
 	if err != nil {
 		log.Fatalf("Fullmove count '%s' is invalid.", fields[5])
+	}
+
+	// populate the moves lists
+	nextMoves := []Move{}
+	for _, m := range nextMovesStr {
+		nextMoves = append(nextMoves, ParseMoveStr(m))
+	}
+
+	prevMoves := []Move{}
+	for _, m := range prevMovesStr {
+		prevMoves = append(prevMoves, ParseMoveStr(m))
 	}
 
 	// only two statuses possible during the reading stage
@@ -125,7 +300,7 @@ func ReadChessGame(fenStr string) ChessGame {
 			} else {
 				// populate the empty spaces with the placeholder '.'
 				for j := 0; j < parsedNum; j++ {
-					b.grid[rankindex][fileindex] = "."
+					b.grid[rankindex][fileindex] = EMPTY
 					fileindex++
 				}
 			}
@@ -141,5 +316,7 @@ func ReadChessGame(fenStr string) ChessGame {
 		HalfmoveClock: halfclock,
 		FullmoveCount: fullmoveCount,
 		Status:        status,
+		NextMoves:     nextMoves,
+		PrevMoves:     prevMoves,
 	}
 }
