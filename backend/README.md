@@ -169,7 +169,8 @@ The server starts on port **8080** by default.
 ```
 {
   "action": "move",
-  "game_id": 1
+  "game_id": 1,
+  "player_id": 1
 }
 ```
 
