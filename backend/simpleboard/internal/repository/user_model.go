@@ -1,7 +1,7 @@
-package user
+package repository
 
 import (
-//"fmt"
+// "fmt"
 )
 
 // User is an instance of a registered user

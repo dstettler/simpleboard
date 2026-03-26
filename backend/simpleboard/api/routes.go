@@ -7,10 +7,10 @@ import (
 )
 
 func RegisterRoutes() *gin.Engine {
-    r := gin.Default()
+	r := gin.Default()
 
-    r.GET("/api/health", handler.Health)
+	r.GET("/api/health", handler.Health)
 	r.POST("/api/register", handler.Register)
 
-    return r
+	return r
 }
