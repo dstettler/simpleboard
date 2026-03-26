@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.progress-fill {
+  animation: fillBar 1.2s ease-out forwards;
+  transform-origin: left;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
+}
+
+.rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 1.8rem;
+  animation: floatPiece 2.8s ease-in-out infinite;
+}
+
+@keyframes fillBar {
+  from {
+    width: 0;
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes floatPiece {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.04);
+  }
+}

@@ -1,19 +1,13 @@
-/* Reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html, body {
-  height: 100%;
-  font-family: 'Inter', sans-serif;
-  background: #0b0b0b;
-  color: #ffffff;
-}
-
-/* Smooth rendering */
 body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', sans-serif;
+  background: #0a0a0a;
+  color: white;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
 }

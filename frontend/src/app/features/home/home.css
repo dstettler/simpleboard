@@ -1,0 +1,117 @@
+.home-page {
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+}
+
+/* NAVBAR */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: #1a1a1a;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.nav-links a {
+  margin-left: 20px;
+  text-decoration: none;
+  color: white;
+}
+
+.nav-links a:hover {
+  color: #4caf50;
+}
+
+/* HERO */
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 80px 60px;
+}
+
+.hero-content h1 {
+  font-size: 48px;
+}
+
+.hero-content p {
+  margin: 20px 0;
+  color: #ccc;
+}
+
+.hero-buttons button {
+  padding: 12px 24px;
+  margin-right: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.play-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.learn-btn {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+}
+
+.hero-board {
+  font-size: 24px;
+  line-height: 30px;
+}
+
+/* FEATURES */
+
+.features {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 60px;
+}
+
+.feature-card {
+  background: #1f1f1f;
+  padding: 30px;
+  border-radius: 8px;
+  width: 250px;
+}
+
+.feature-card h3 {
+  margin-bottom: 10px;
+}
+
+/* CTA */
+
+.cta {
+  text-align: center;
+  padding: 60px;
+}
+
+.cta-btn {
+  margin-top: 20px;
+  padding: 14px 30px;
+  font-size: 18px;
+  background: #4caf50;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* FOOTER */
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  background: #1a1a1a;
+  margin-top: 40px;
+}
