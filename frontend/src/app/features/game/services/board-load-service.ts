@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { Position, positionToAlgebraic } from './pieces/Position';
-import { mockPositions } from './BoardState';
 import { API_ENDPOINT } from '../../../app.constants';
 
 type GameRequest = {
@@ -18,8 +17,8 @@ type GameApiResponse = {
   state: string;
   status: string;
   side: string;
-  nextMoves: string[]
-  prevMoves: string[]
+  next_moves: string[]
+  prev_moves: string[]
 }
 
 type GameApiError = {
@@ -92,7 +91,14 @@ export class BoardLoadService {
       move: moveStr
     };
 
-    return this.gameRequest(req);
+    const stateReq: GameRequest = {
+      action: "state",
+      game_id: gameId,
+      player_id: playerId,
+    };
+
+
+    return this.gameRequest(req).pipe(switchMap(() => this.gameRequest(stateReq)));
   }
 
   public fenDecode(fenString: string): ChessPiece[] {
