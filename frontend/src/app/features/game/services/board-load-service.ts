@@ -10,7 +10,11 @@ type GameRequest = {
   action: string;
   game_id: number;
   player_id: number;
-  move?: string;
+  move: string;
+}
+
+type ResponseUser = {
+  user: GameApiResponse
 }
 
 type GameApiResponse = {
@@ -39,9 +43,10 @@ export class BoardLoadService {
   boardLoad(gameId: number, playerId: number): Observable<ChessPiece[]> {
     // Load initial state
     const req: GameRequest = {
-      action: "state",
+      action:"state",
       game_id: gameId,
-      player_id: playerId
+      player_id: playerId,
+      move: ""
     };
 
     return this.gameRequest(req);
@@ -49,7 +54,7 @@ export class BoardLoadService {
 
   gameRequest(reqBody: GameRequest): Observable<ChessPiece[]> {
     // Returns an observable after sequentially decoding JSON string and filtering into the map via rxjs pipe.
-    return this.http.post<GameApiResponse|GameApiError>(`${API_ENDPOINT}/api/game`, reqBody).pipe(
+    return this.http.post<ResponseUser|GameApiError>(`${API_ENDPOINT}/api/game`, reqBody).pipe(
       map(state => {
         if ("error" in state) {
           const err = state as GameApiError;
@@ -61,10 +66,10 @@ export class BoardLoadService {
             return this.positionsArray;
           }
         } else {
-          const resp = state as GameApiResponse;
-          const ret = this.fenDecode(resp.state);
+          const resp = state as ResponseUser;
+          const ret = this.fenDecode(resp.user.state);
           this.positionsArray = ret;
-          return this.fenDecode(resp.state);
+          return ret;
         }
       })
     );
@@ -95,6 +100,7 @@ export class BoardLoadService {
       action: "state",
       game_id: gameId,
       player_id: playerId,
+      move: ''
     };
 
 

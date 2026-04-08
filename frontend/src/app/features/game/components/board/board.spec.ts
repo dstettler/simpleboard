@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Board } from './board';
 import { API_ENDPOINT } from '../../../../app.constants';
 
-export const mockBoardStateResponse = { "state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+export const mockBoardStateResponse = { user: { "state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"  } };
 
 describe('Board', () => {
   let component: Board;
