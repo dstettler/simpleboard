@@ -185,7 +185,7 @@ func (g *ChessGame) generatePawnMoves(r, f int, white bool) []Move {
 		for _, dir := range []int{-1, 1} {
 			fcap := f + dir
 			if r < 7 && fcap >= 0 && fcap < 8 {
-				if utils.IsLower(b[r+1][fcap]) && b[r+1][fcap] != EMPTY {
+				if utils.IsUpper(b[r+1][fcap]) && b[r+1][fcap] != EMPTY {
 					moves = append(moves, Move{r, f, r + 1, fcap, true, false, ""})
 				}
 				// En passant
@@ -274,6 +274,7 @@ func (g *ChessGame) generateVarLenMoves(r, f int, white bool, vecs [][2]int) []M
 				moves = append(moves, Move{r, f, nr, nf, false, false, ""})
 				s += 1
 				nr, nf = int(r+(s*v[0])), int(f+(s*v[1]))
+				continue
 			}
 
 			if (white && utils.IsLower(t)) || (!white && utils.IsUpper(t)) {
@@ -448,6 +449,34 @@ func (g *ChessGame) MakeMove(m Move) {
 		} else { // O-O-O
 			b[m.TR][m.TF-2] = EMPTY
 			b[m.TR][m.TF+1] = c
+		}
+	}
+	// rights
+	if g.Castle != "-" {
+		if p == "K" {
+			g.Castle = strings.ReplaceAll(g.Castle, "K", "")
+			g.Castle = strings.ReplaceAll(g.Castle, "Q", "")
+		}
+		if p == "k" {
+			g.Castle = strings.ReplaceAll(g.Castle, "k", "")
+			g.Castle = strings.ReplaceAll(g.Castle, "q", "")
+		}
+		if p == "R" {
+			if m.SF == 0 {
+				g.Castle = strings.ReplaceAll(g.Castle, "Q", "")
+			} else {
+				g.Castle = strings.ReplaceAll(g.Castle, "K", "")
+			}
+		}
+		if p == "r" {
+			if m.SF == 0 {
+				g.Castle = strings.ReplaceAll(g.Castle, "q", "")
+			} else {
+				g.Castle = strings.ReplaceAll(g.Castle, "k", "")
+			}
+		}
+		if g.Castle == "" {
+			g.Castle = "-" // set no castling rights - never enters this loop again
 		}
 	}
 
