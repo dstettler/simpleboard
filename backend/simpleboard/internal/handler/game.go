@@ -17,10 +17,10 @@ import (
 // Game endpoint
 func Game(c *gin.Context) {
 	var input struct {
-		Action string `json:"action"`
-		GameID int `json:"game_id"`
-		PlayerID int `json:"player_id"`
-		Move string `json:"move"`
+		Action   string `json:"action"`
+		GameID   int    `json:"game_id"`
+		PlayerID int    `json:"player_id"`
+		Move     string `json:"move"`
 	}
 
 	// bad request; could not bind context into input struct
@@ -51,15 +51,14 @@ func Game(c *gin.Context) {
 		prevMovesData, _ := json.Marshal(prevMovesStr)
 		prevMovesJSON := datatypes.JSON(prevMovesData)
 
-
 		entry := repository.Game{
 			WhitePlayerID: uint(input.PlayerID),
 			BlackPlayerID: uint(input.PlayerID),
-			State: game.FEN(),
-			Status: chess.InProgress.String(),
-			Side: game.Side,
-			NextMoves: nextMovesJSON,
-			PrevMoves: prevMovesJSON,
+			State:         game.FEN(),
+			Status:        chess.InProgress.String(),
+			Side:          game.Side,
+			NextMoves:     nextMovesJSON,
+			PrevMoves:     prevMovesJSON,
 		}
 
 		// create entry
@@ -72,16 +71,16 @@ func Game(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "game created",
 			"user": gin.H{
-				"game_id":  entry.ID,
+				"game_id":         entry.ID,
 				"white_player_id": entry.WhitePlayerID,
 				"black_player_id": entry.BlackPlayerID,
-				"state": entry.State,
-				"status": entry.Status,
-				"side": entry.Side,
-				"next_moves": entry.NextMoves,
-				"prev_moves": entry.PrevMoves,
-				"created_at": entry.CreatedAt,
-				"updated_at": entry.UpdatedAt,
+				"state":           entry.State,
+				"status":          entry.Status,
+				"side":            entry.Side,
+				"next_moves":      entry.NextMoves,
+				"prev_moves":      entry.PrevMoves,
+				"created_at":      entry.CreatedAt,
+				"updated_at":      entry.UpdatedAt,
 			},
 		})
 	} else if action == "state" {
@@ -96,16 +95,16 @@ func Game(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "game created",
 			"user": gin.H{
-				"game_id":  entry.ID,
+				"game_id":         entry.ID,
 				"white_player_id": entry.WhitePlayerID,
 				"black_player_id": entry.BlackPlayerID,
-				"state": entry.State,
-				"status": entry.Status,
-				"side": entry.Side,
-				"next_moves": entry.NextMoves,
-				"prev_moves": entry.PrevMoves,
-				"created_at": entry.CreatedAt,
-				"updated_at": entry.UpdatedAt,
+				"state":           entry.State,
+				"status":          entry.Status,
+				"side":            entry.Side,
+				"next_moves":      entry.NextMoves,
+				"prev_moves":      entry.PrevMoves,
+				"created_at":      entry.CreatedAt,
+				"updated_at":      entry.UpdatedAt,
 			},
 		})
 	} else if action == "move" {
@@ -152,16 +151,15 @@ func Game(c *gin.Context) {
 		prevMovesData, _ := json.Marshal(prevMovesStr)
 		prevMovesJSON := datatypes.JSON(prevMovesData)
 
-
 		updatedEntry := repository.Game{
-			ID: uint(input.GameID),
+			ID:            uint(input.GameID),
 			WhitePlayerID: uint(input.PlayerID),
 			BlackPlayerID: uint(input.PlayerID),
-			State: game.FEN(),
-			Status: game.Status.String(),
-			Side: game.Side,
-			NextMoves: nextMovesJSON,
-			PrevMoves: prevMovesJSON,
+			State:         game.FEN(),
+			Status:        game.Status.String(),
+			Side:          game.Side,
+			NextMoves:     nextMovesJSON,
+			PrevMoves:     prevMovesJSON,
 		}
 
 		db.DB.Save(&updatedEntry)
@@ -169,20 +167,20 @@ func Game(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "move applied",
 			"user": gin.H{
-				"game_id":  entry.ID,
+				"game_id":         entry.ID,
 				"white_player_id": entry.WhitePlayerID,
 				"black_player_id": entry.BlackPlayerID,
-				"state": entry.State,
-				"status": entry.Status,
-				"side": entry.Side,
-				"next_moves": entry.NextMoves,
-				"prev_moves": entry.PrevMoves,
-				"created_at": entry.CreatedAt,
-				"updated_at": entry.UpdatedAt,
+				"state":           entry.State,
+				"status":          entry.Status,
+				"side":            entry.Side,
+				"next_moves":      entry.NextMoves,
+				"prev_moves":      entry.PrevMoves,
+				"created_at":      entry.CreatedAt,
+				"updated_at":      entry.UpdatedAt,
 			},
 		})
 	} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid action"})
-			return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid action"})
+		return
 	}
 }

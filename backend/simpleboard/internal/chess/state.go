@@ -96,6 +96,28 @@ type Move struct {
 	Promotion string
 }
 
+// Pointer receiver for '==' operation
+func (l *Move) IsEqual(r Move) bool {
+	// compare the source and target rank indices, attributes for the two moves
+	eq := l.SR == r.SR && l.SF == r.SF && l.TR == r.TR && l.TF == r.TF
+	eq = eq && r.Capture == l.Capture && r.Castling == l.Castling && r.Promotion == l.Promotion
+	return eq
+}
+
+// Create a deep copy of the Move
+func (orig Move) Copy() Move {
+	m := Move{
+		SR:        orig.SR,
+		SF:        orig.SF,
+		TR:        orig.TR,
+		TF:        orig.TF,
+		Capture:   orig.Capture,
+		Castling:  orig.Castling,
+		Promotion: orig.Promotion,
+	}
+	return m
+}
+
 // Parses a move string and returns a populated Move
 func ParseMoveStr(s string) Move {
 	length := len(s)
@@ -122,7 +144,7 @@ func ParseMoveStr(s string) Move {
 		tr, tf = ParseCoords(s[2:4])
 	}
 
-	if (length <= 4 && !capture) || (length > 5 && capture) {
+	if (length > 4 && !capture) || (length > 5 && capture) {
 		promo = s[length-1:]
 	}
 
@@ -147,6 +169,7 @@ func (m Move) WriteMoveStr() string {
 		moveStr += "x"
 	}
 	moveStr += t
+	moveStr += m.Promotion
 
 	return moveStr
 }

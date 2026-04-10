@@ -21,18 +21,22 @@ var kingVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-
 func (g *ChessGame) Move(moveStr string) error {
 
 	// check game Status
-	if !(g.Status == InProgress || g.Status == NotStarted) { return errors.New("Game is over.") }
+	if !(g.Status == InProgress || g.Status == NotStarted) {
+		return errors.New("Game is over.")
+	}
 
 	// parse moveStr
 	m := ParseMoveStr(moveStr)
 
-	// generate legal moves from the game state
+	// grab legal moves from the game state
 	legalMoves := g.NextMoves
 
 	for _, lm := range legalMoves {
-		if m.SR == lm.SR && m.SF == lm.SF && m.TR == lm.TR && m.TF == lm.TF {
+		if m.IsEqual(lm) {
 			g.MakeMove(m) // makes the actual move
-			if g.Status == NotStarted { g.Status = InProgress }
+			if g.Status == NotStarted {
+				g.Status = InProgress
+			}
 			g.PrevMoves = append(g.PrevMoves, m) // appends previous move
 
 			if g.HalfmoveClock >= 100 {
@@ -41,7 +45,7 @@ func (g *ChessGame) Move(moveStr string) error {
 			}
 
 			legalMoves := g.LegalMoves() // generate next set of legal moves
-			if len(legalMoves) == 0 { // checkmate
+			if len(legalMoves) == 0 {    // checkmate
 				if g.Side == "w" {
 					g.Status = WinBlack
 				} else {
@@ -53,7 +57,7 @@ func (g *ChessGame) Move(moveStr string) error {
 		}
 	}
 
-	return nil
+	return errors.New("'" + moveStr + "' is not a legal move")
 }
 
 // Generates legal moves from an array of possible move patterns
@@ -74,6 +78,14 @@ func (g *ChessGame) LegalMoves() []Move {
 
 		// check king
 		if !copy.IsAttacked(kr, kf) {
+
+			// castling rule verification: cannot pass through attacked spaces
+			if m.Castling {
+				if !checkCastlePassthrough(g, m) {
+					continue
+				} // do not append
+			}
+
 			moves = append(moves, m)
 		}
 	}
@@ -148,11 +160,16 @@ func (g *ChessGame) generatePawnMoves(r, f int, white bool) []Move {
 		for _, dir := range []int{-1, 1} {
 			fcap := f + dir
 			if r > 0 && fcap >= 0 && fcap < 8 {
-				if utils.IsLower(b[r-1][fcap]) {
+				if utils.IsLower(b[r-1][fcap]) && b[r-1][fcap] != EMPTY {
+					moves = append(moves, Move{r, f, r - 1, fcap, true, false, ""})
+				}
+				// En passant
+				if g.EPTS != "-" && ParseAlg(r-1, fcap) == g.EPTS && b[r-1][fcap] == EMPTY {
 					moves = append(moves, Move{r, f, r - 1, fcap, true, false, ""})
 				}
 			}
 		}
+
 	} else {
 		// Single square
 		if r < 7 && b[r+1][f] == EMPTY {
@@ -168,14 +185,40 @@ func (g *ChessGame) generatePawnMoves(r, f int, white bool) []Move {
 		for _, dir := range []int{-1, 1} {
 			fcap := f + dir
 			if r < 7 && fcap >= 0 && fcap < 8 {
-				if utils.IsLower(b[r+1][fcap]) {
+				if utils.IsUpper(b[r+1][fcap]) && b[r+1][fcap] != EMPTY {
+					moves = append(moves, Move{r, f, r + 1, fcap, true, false, ""})
+				}
+				// En passant
+				if g.EPTS != "-" && ParseAlg(r+1, fcap) == g.EPTS && b[r+1][fcap] == EMPTY {
 					moves = append(moves, Move{r, f, r + 1, fcap, true, false, ""})
 				}
 			}
 		}
-		// TODO: add enpassant logic
-		// TODO: add promotion logic
 	}
+
+	// for all possible moves, if they end up on the promotion rank,
+	// replace with promotion augmented moves
+	prommoves := []Move{}
+	var proms []string
+	if white {
+		proms = []string{"B", "N", "R", "Q"}
+	} else {
+		proms = []string{"b", "n", "r", "q"}
+	}
+	for i := 0; i < len(moves); i++ {
+		m := moves[i].Copy()
+		if m.TR == 0 || m.TR == 7 { // promotion rank; append combinations
+			moves[i].Promotion = proms[0]
+			for _, p := range proms[1:] {
+				pm := m.Copy()
+				pm.Promotion = p
+				prommoves = append(prommoves, pm)
+			}
+		}
+	}
+
+	moves = append(moves, prommoves...)
+
 	return moves
 }
 
@@ -231,6 +274,7 @@ func (g *ChessGame) generateVarLenMoves(r, f int, white bool, vecs [][2]int) []M
 				moves = append(moves, Move{r, f, nr, nf, false, false, ""})
 				s += 1
 				nr, nf = int(r+(s*v[0])), int(f+(s*v[1]))
+				continue
 			}
 
 			if (white && utils.IsLower(t)) || (!white && utils.IsUpper(t)) {
@@ -292,7 +336,46 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 			moves = append(moves, Move{r, f, nr, nf, true, false, ""})
 		}
 	}
-	// TODO: add castling logic? or in LegalMoves()
+
+	// castling move generation; legality checked later
+	for i := 0; i < len(g.Castle); i++ {
+		c := string(g.Castle[i]) // get single castling entry
+		var cm Move
+		kingside := true
+		available := true
+		if utils.IsUpper(c) {
+			if white {
+				if c == "K" { // O-O
+					cm = ParseMoveStr("e1g1")
+				}
+				if c == "Q" { // O-O-O
+					kingside = false
+					cm = ParseMoveStr("e1c1")
+				}
+			}
+		}
+		if utils.IsLower(c) {
+			if !white {
+				if c == "k" { // o-o
+					cm = ParseMoveStr("e8g8")
+				}
+				if c == "q" { // o-o-o
+					kingside = false
+					cm = ParseMoveStr("e8c8")
+				}
+			}
+		}
+
+		if kingside && (b[cm.SR][cm.SF+1] != EMPTY || b[cm.SR][cm.SF+2] != EMPTY) {
+			available = false
+		}
+		if !kingside && (b[cm.SR][cm.SF-1] != EMPTY || b[cm.SR][cm.SF-2] != EMPTY || b[cm.SR][cm.SF-3] != EMPTY) {
+			available = false
+		}
+		if available {
+			moves = append(moves, cm)
+		}
+	}
 
 	return moves
 }
@@ -309,7 +392,9 @@ func (g *ChessGame) KingCoords(white bool) (int, int) {
 
 	for r := 0; r < 8; r++ {
 		for f := 0; f < 8; f++ {
-			if b[r][f] == p { return r, f }
+			if b[r][f] == p {
+				return r, f
+			}
 		}
 	}
 	return -1, -1
@@ -320,14 +405,87 @@ func (g *ChessGame) KingCoords(white bool) (int, int) {
 func (g *ChessGame) MakeMove(m Move) {
 	b := &g.Board.grid
 	p := b[m.SR][m.SF]
+	side := g.Side
+	white := (side == "w")
+	setEPTS := false
 
-	// TODO: En Passant
-	// TODO: Castling
-
+	// handle en passant
+	if white && p == "P" {
+		if m.Capture && ParseAlg(m.TR, m.TF) == g.EPTS { // capture
+			b[m.TR+1][m.TF] = EMPTY
+		}
+		if m.SR-m.TR == 2 { // two space move - mark EPTS
+			g.EPTS = ParseAlg(m.SR-1, m.SF)
+			setEPTS = true
+		}
+	}
+	if !white && p == "p" {
+		if m.Capture && ParseAlg(m.TR, m.TF) == g.EPTS { // capture
+			b[m.TR-1][m.TF] = EMPTY
+		}
+		if m.TR-m.SR == 2 { // two space move - mark EPTS
+			g.EPTS = ParseAlg(m.SR+1, m.SF)
+			setEPTS = true
+		}
+	}
 	b[m.TR][m.TF] = p
+
+	// handle promotion
+	if m.Promotion != "" && strings.ToLower(b[m.TR][m.TF]) == "p" {
+		b[m.TR][m.TF] = m.Promotion
+	}
+
+	// handle castling
+	if m.Castling {
+		var c string
+		if side == "w" {
+			c = "R"
+		} else {
+			c = "r"
+		}
+		if m.TF > 4 { // O-O
+			b[m.TR][m.TF+1] = EMPTY
+			b[m.TR][m.TF-1] = c
+		} else { // O-O-O
+			b[m.TR][m.TF-2] = EMPTY
+			b[m.TR][m.TF+1] = c
+		}
+	}
+	// rights
+	if g.Castle != "-" {
+		if p == "K" {
+			g.Castle = strings.ReplaceAll(g.Castle, "K", "")
+			g.Castle = strings.ReplaceAll(g.Castle, "Q", "")
+		}
+		if p == "k" {
+			g.Castle = strings.ReplaceAll(g.Castle, "k", "")
+			g.Castle = strings.ReplaceAll(g.Castle, "q", "")
+		}
+		if p == "R" {
+			if m.SF == 0 {
+				g.Castle = strings.ReplaceAll(g.Castle, "Q", "")
+			} else {
+				g.Castle = strings.ReplaceAll(g.Castle, "K", "")
+			}
+		}
+		if p == "r" {
+			if m.SF == 0 {
+				g.Castle = strings.ReplaceAll(g.Castle, "q", "")
+			} else {
+				g.Castle = strings.ReplaceAll(g.Castle, "k", "")
+			}
+		}
+		if g.Castle == "" {
+			g.Castle = "-" // set no castling rights - never enters this loop again
+		}
+	}
+
 	b[m.SR][m.SF] = EMPTY
 
-	// TODO: Promotion
+	// propagate or remove EPTS
+	if !setEPTS {
+		g.EPTS = "-"
+	}
 
 	// reset halfmove clock
 	if m.Capture || strings.ToLower(p) == "p" {
@@ -337,7 +495,7 @@ func (g *ChessGame) MakeMove(m Move) {
 	}
 
 	// switch side to move; increment fullmove counter
-	if g.Side == "w" {
+	if white {
 		g.Side = "b"
 	} else {
 		g.Side = "w"
@@ -442,4 +600,32 @@ func (g *ChessGame) IsAttacked(r, f int) bool {
 	}
 
 	return false
+}
+
+// For castling moves - checks the passthrough spaces for IsAttacked()
+func checkCastlePassthrough(g *ChessGame, m Move) bool {
+	b := g.Board.grid
+	white := utils.IsUpper(b[m.SR][m.SF])
+
+	pm := m.Copy()
+
+	// define the passthrough space
+	if m.IsEqual(ParseMoveStr("e8g8")) || m.IsEqual(ParseMoveStr("e1g1")) {
+		pm.TF = pm.SF + 1
+	} else if m.IsEqual(ParseMoveStr("e8c8")) || m.IsEqual(ParseMoveStr("e1c1")) {
+		pm.TF = pm.SF - 1
+	} else {
+		log.Fatalf("'%s' is not a valid castling move", m.WriteMoveStr())
+		return false
+	}
+
+	// make the move to to check the passthrough
+	// (the target square of the castle is already
+	// checked for legality as the result of a castle
+	// in LegalMoves())
+	copy := g.Copy()
+	copy.MakeMove(pm)
+	kr, kf := copy.KingCoords(white)
+	return !copy.IsAttacked(kr, kf)
+
 }
