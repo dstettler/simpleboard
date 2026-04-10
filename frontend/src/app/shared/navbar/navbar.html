@@ -1,9 +1,20 @@
 <nav class="navbar">
-  <div class="nav-brand" routerLink="/">SimpleBoard</div>
+  <div class="nav-shell">
 
-  <div class="nav-links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-    <a routerLink="/login" routerLinkActive="active">Login</a>
+    <!-- Left: Brand -->
+    <a class="nav-brand" routerLink="/">
+      <span class="brand-mark">♞</span>
+      <span class="brand-text">SimpleBoard</span>
+    </a>
+
+    <!-- Center: Navigation -->
+    <div class="nav-center">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/login" routerLinkActive="active">Login</a>
+    </div>
+    <div class="nav-right">
+  <a routerLink="/login" class="nav-cta">Play Now</a>
+</div>
   </div>
 </nav>
