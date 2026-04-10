@@ -21,18 +21,22 @@ var kingVectors = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-
 func (g *ChessGame) Move(moveStr string) error {
 
 	// check game Status
-	if !(g.Status == InProgress || g.Status == NotStarted) { return errors.New("Game is over.") }
+	if !(g.Status == InProgress || g.Status == NotStarted) {
+		return errors.New("Game is over.")
+	}
 
 	// parse moveStr
 	m := ParseMoveStr(moveStr)
 
-	// generate legal moves from the game state
+	// grab legal moves from the game state
 	legalMoves := g.NextMoves
 
 	for _, lm := range legalMoves {
-		if m.SR == lm.SR && m.SF == lm.SF && m.TR == lm.TR && m.TF == lm.TF {
+		if m.IsEqual(lm) {
 			g.MakeMove(m) // makes the actual move
-			if g.Status == NotStarted { g.Status = InProgress }
+			if g.Status == NotStarted {
+				g.Status = InProgress
+			}
 			g.PrevMoves = append(g.PrevMoves, m) // appends previous move
 
 			if g.HalfmoveClock >= 100 {
@@ -41,7 +45,7 @@ func (g *ChessGame) Move(moveStr string) error {
 			}
 
 			legalMoves := g.LegalMoves() // generate next set of legal moves
-			if len(legalMoves) == 0 { // checkmate
+			if len(legalMoves) == 0 {    // checkmate
 				if g.Side == "w" {
 					g.Status = WinBlack
 				} else {
@@ -53,7 +57,7 @@ func (g *ChessGame) Move(moveStr string) error {
 		}
 	}
 
-	return nil
+	return errors.New("'" + moveStr + "' is not a legal move")
 }
 
 // Generates legal moves from an array of possible move patterns
@@ -74,6 +78,13 @@ func (g *ChessGame) LegalMoves() []Move {
 
 		// check king
 		if !copy.IsAttacked(kr, kf) {
+
+			// castling rule verification: cannot pass through attacked spaces
+			if m.Castling {
+				if !checkCastlePassthrough(g, m) {
+					continue
+				} // do not append
+			}
 			moves = append(moves, m)
 		}
 	}
@@ -292,7 +303,46 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 			moves = append(moves, Move{r, f, nr, nf, true, false, ""})
 		}
 	}
-	// TODO: add castling logic? or in LegalMoves()
+
+	// castling move generation; legality checked later
+	for i := 0; i < len(g.Castle); i++ {
+		c := string(g.Castle[i]) // get single castling entry
+		var cm Move
+		kingside := true
+		available := true
+		if utils.IsUpper(c) {
+			if white {
+				if c == "K" { // O-O
+					cm = ParseMoveStr("e1g1")
+				}
+				if c == "Q" { // O-O-O
+					kingside = false
+					cm = ParseMoveStr("e1c1")
+				}
+			}
+		}
+		if utils.IsLower(c) {
+			if !white {
+				if c == "k" { // o-o
+					cm = ParseMoveStr("e8g8")
+				}
+				if c == "q" { // o-o-o
+					kingside = false
+					cm = ParseMoveStr("e8c8")
+				}
+			}
+		}
+
+		if kingside && (b[cm.SR][cm.SF+1] != EMPTY || b[cm.SR][cm.SF+2] != EMPTY) {
+			available = false
+		}
+		if !kingside && (b[cm.SR][cm.SF-1] != EMPTY || b[cm.SR][cm.SF-2] != EMPTY || b[cm.SR][cm.SF-3] != EMPTY) {
+			available = false
+		}
+		if available {
+			moves = append(moves, cm)
+		}
+	}
 
 	return moves
 }
@@ -309,7 +359,9 @@ func (g *ChessGame) KingCoords(white bool) (int, int) {
 
 	for r := 0; r < 8; r++ {
 		for f := 0; f < 8; f++ {
-			if b[r][f] == p { return r, f }
+			if b[r][f] == p {
+				return r, f
+			}
 		}
 	}
 	return -1, -1
@@ -320,11 +372,30 @@ func (g *ChessGame) KingCoords(white bool) (int, int) {
 func (g *ChessGame) MakeMove(m Move) {
 	b := &g.Board.grid
 	p := b[m.SR][m.SF]
+	side := g.Side
 
 	// TODO: En Passant
 	// TODO: Castling
 
 	b[m.TR][m.TF] = p
+
+	// handle castling
+	if m.Castling {
+		var c string
+		if side == "w" {
+			c = "R"
+		} else {
+			c = "r"
+		}
+		if m.TF > 4 { // O-O
+			b[m.TR][m.TF+1] = EMPTY
+			b[m.TR][m.TF-1] = c
+		} else { // O-O-O
+			b[m.TR][m.TF-2] = EMPTY
+			b[m.TR][m.TF+1] = c
+		}
+	}
+
 	b[m.SR][m.SF] = EMPTY
 
 	// TODO: Promotion
@@ -337,7 +408,7 @@ func (g *ChessGame) MakeMove(m Move) {
 	}
 
 	// switch side to move; increment fullmove counter
-	if g.Side == "w" {
+	if side == "w" {
 		g.Side = "b"
 	} else {
 		g.Side = "w"
@@ -442,4 +513,32 @@ func (g *ChessGame) IsAttacked(r, f int) bool {
 	}
 
 	return false
+}
+
+// For castling moves - checks the passthrough spaces for IsAttacked()
+func checkCastlePassthrough(g *ChessGame, m Move) bool {
+	b := g.Board.grid
+	white := utils.IsUpper(b[m.SR][m.SF])
+
+	pm := m.Copy()
+
+	// define the passthrough space
+	if m.IsEqual(ParseMoveStr("e8g8")) || m.IsEqual(ParseMoveStr("e1g1")) {
+		pm.TF = pm.SF + 1
+	} else if m.IsEqual(ParseMoveStr("e8c8")) || m.IsEqual(ParseMoveStr("e1c1")) {
+		pm.TF = pm.SF - 1
+	} else {
+		log.Fatalf("'%s' is not a valid castling move", m.WriteMoveStr())
+		return false
+	}
+
+	// make the move to to check the passthrough
+	// (the target square of the castle is already
+	// checked for legality as the result of a castle
+	// in LegalMoves())
+	copy := g.Copy()
+	copy.MakeMove(pm)
+	kr, kf := copy.KingCoords(white)
+	return !copy.IsAttacked(kr, kf)
+
 }
