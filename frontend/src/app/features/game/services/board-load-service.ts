@@ -96,15 +96,7 @@ export class BoardLoadService {
       move: moveStr
     };
 
-    const stateReq: GameRequest = {
-      action: "state",
-      game_id: gameId,
-      player_id: playerId,
-      move: ''
-    };
-
-
-    return this.gameRequest(req).pipe(switchMap(() => this.gameRequest(stateReq)));
+    return this.gameRequest(req);
   }
 
   public fenDecode(fenString: string): ChessPiece[] {
