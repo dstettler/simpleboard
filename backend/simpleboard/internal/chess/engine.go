@@ -85,6 +85,7 @@ func (g *ChessGame) LegalMoves() []Move {
 					continue
 				} // do not append
 			}
+
 			moves = append(moves, m)
 		}
 	}
@@ -159,11 +160,16 @@ func (g *ChessGame) generatePawnMoves(r, f int, white bool) []Move {
 		for _, dir := range []int{-1, 1} {
 			fcap := f + dir
 			if r > 0 && fcap >= 0 && fcap < 8 {
-				if utils.IsLower(b[r-1][fcap]) {
+				if utils.IsLower(b[r-1][fcap]) && b[r-1][fcap] != EMPTY {
+					moves = append(moves, Move{r, f, r - 1, fcap, true, false, ""})
+				}
+				// En passant
+				if g.EPTS != "-" && ParseAlg(r-1, fcap) == g.EPTS && b[r-1][fcap] == EMPTY {
 					moves = append(moves, Move{r, f, r - 1, fcap, true, false, ""})
 				}
 			}
 		}
+
 	} else {
 		// Single square
 		if r < 7 && b[r+1][f] == EMPTY {
@@ -179,14 +185,40 @@ func (g *ChessGame) generatePawnMoves(r, f int, white bool) []Move {
 		for _, dir := range []int{-1, 1} {
 			fcap := f + dir
 			if r < 7 && fcap >= 0 && fcap < 8 {
-				if utils.IsLower(b[r+1][fcap]) {
+				if utils.IsLower(b[r+1][fcap]) && b[r+1][fcap] != EMPTY {
+					moves = append(moves, Move{r, f, r + 1, fcap, true, false, ""})
+				}
+				// En passant
+				if g.EPTS != "-" && ParseAlg(r+1, fcap) == g.EPTS && b[r+1][fcap] == EMPTY {
 					moves = append(moves, Move{r, f, r + 1, fcap, true, false, ""})
 				}
 			}
 		}
-		// TODO: add enpassant logic
-		// TODO: add promotion logic
 	}
+
+	// for all possible moves, if they end up on the promotion rank,
+	// replace with promotion augmented moves
+	prommoves := []Move{}
+	var proms []string
+	if white {
+		proms = []string{"B", "N", "R", "Q"}
+	} else {
+		proms = []string{"b", "n", "r", "q"}
+	}
+	for i := 0; i < len(moves); i++ {
+		m := moves[i].Copy()
+		if m.TR == 0 || m.TR == 7 { // promotion rank; append combinations
+			moves[i].Promotion = proms[0]
+			for _, p := range proms[1:] {
+				pm := m.Copy()
+				pm.Promotion = p
+				prommoves = append(prommoves, pm)
+			}
+		}
+	}
+
+	moves = append(moves, prommoves...)
+
 	return moves
 }
 
@@ -373,11 +405,34 @@ func (g *ChessGame) MakeMove(m Move) {
 	b := &g.Board.grid
 	p := b[m.SR][m.SF]
 	side := g.Side
+	white := (side == "w")
+	setEPTS := false
 
-	// TODO: En Passant
-	// TODO: Castling
-
+	// handle en passant
+	if white && p == "P" {
+		if m.Capture && ParseAlg(m.TR, m.TF) == g.EPTS { // capture
+			b[m.TR+1][m.TF] = EMPTY
+		}
+		if m.SR-m.TR == 2 { // two space move - mark EPTS
+			g.EPTS = ParseAlg(m.SR-1, m.SF)
+			setEPTS = true
+		}
+	}
+	if !white && p == "p" {
+		if m.Capture && ParseAlg(m.TR, m.TF) == g.EPTS { // capture
+			b[m.TR-1][m.TF] = EMPTY
+		}
+		if m.TR-m.SR == 2 { // two space move - mark EPTS
+			g.EPTS = ParseAlg(m.SR+1, m.SF)
+			setEPTS = true
+		}
+	}
 	b[m.TR][m.TF] = p
+
+	// handle promotion
+	if m.Promotion != "" && strings.ToLower(b[m.TR][m.TF]) == "p" {
+		b[m.TR][m.TF] = m.Promotion
+	}
 
 	// handle castling
 	if m.Castling {
@@ -398,7 +453,10 @@ func (g *ChessGame) MakeMove(m Move) {
 
 	b[m.SR][m.SF] = EMPTY
 
-	// TODO: Promotion
+	// propagate or remove EPTS
+	if !setEPTS {
+		g.EPTS = "-"
+	}
 
 	// reset halfmove clock
 	if m.Capture || strings.ToLower(p) == "p" {
@@ -408,7 +466,7 @@ func (g *ChessGame) MakeMove(m Move) {
 	}
 
 	// switch side to move; increment fullmove counter
-	if side == "w" {
+	if white {
 		g.Side = "b"
 	} else {
 		g.Side = "w"
