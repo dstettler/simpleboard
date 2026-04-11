@@ -8,6 +8,19 @@ export interface BoardState {
     enPassant: Position|null;
     halfmoveClock: number;
     fullmoveNum: number;
+    userColor: string;
+}
+
+export function emptyState(): BoardState {
+    return {
+      pieces: [],
+      isWhiteMove: false,
+      castleables: '',
+      enPassant: null,
+      halfmoveClock: -1,
+      fullmoveNum: -1,
+      userColor: ''
+    };
 }
 
 export function mockPositions(): ChessPiece[] {

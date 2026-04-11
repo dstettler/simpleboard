@@ -12,7 +12,6 @@ export abstract class ChessPiece {
     }
 
     abstract getClass(): string;
-    abstract getPossibleMoves(): Position[];
 
     getImageUrl(): string {
         let colorPrefix = this.isWhite ? "w" : "b";
@@ -24,21 +23,11 @@ export class Rook extends ChessPiece {
     override getClass(): string {
         return "Rook"
     }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
-    }
 }
 
 export class Knight extends ChessPiece {
     override getClass(): string {
         return "Knight"
-    }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
     }
 }
 
@@ -46,21 +35,11 @@ export class Bishop extends ChessPiece {
     override getClass(): string {
         return "Bishop"
     }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
-    }
 }
 
 export class Pawn extends ChessPiece {
     override getClass(): string {
         return "Pawn"
-    }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
     }
 }
 
@@ -68,21 +47,11 @@ export class King extends ChessPiece {
     override getClass(): string {
         return "King"
     }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
-    }
 }
 
 export class Queen extends ChessPiece {
     override getClass(): string {
         return "Queen"
-    }
-
-    // TODO: Implement https://github.com/dstettler/simpleboard/issues/11
-    override getPossibleMoves(): Position[] {
-        return [];
     }
 }
 

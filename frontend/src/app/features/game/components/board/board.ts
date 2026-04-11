@@ -17,7 +17,7 @@ export class Board {
   grid = Array.from({ length: 64 });
 
   private loadService = inject(BoardLoadService);
-  boardState$: Observable<ChessPiece[]> = this.loadService.boardLoad(1, 0);
+  boardState$: Observable<ChessPiece[]> = this.loadService.boardLoad(1, 0, 'w');
 
   constructor() {}
 

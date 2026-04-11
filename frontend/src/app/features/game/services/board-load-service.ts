@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable, switchMap } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
-import { Position, positionToAlgebraic } from './pieces/Position';
+import { algebraicToPosition, Position, positionToAlgebraic } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
+import { BoardState, emptyState } from './BoardState';
 
 type GameRequest = {
   action: string;
@@ -35,12 +36,12 @@ type GameApiError = {
 export class BoardLoadService {
   private http = inject(HttpClient);
 
-  positionsArray: ChessPiece[]|null = null;
+  state: BoardState|null = null;
 
   /**
    * @returns {Map<string, ChessPiece} Indexed map of pieces on board with key of "[Position.x],[Position.y]".
    */
-  boardLoad(gameId: number, playerId: number): Observable<ChessPiece[]> {
+  boardLoad(gameId: number, playerId: number, playerColor: string): Observable<ChessPiece[]> {
     // Load initial state
     const req: GameRequest = {
       action:"state",
@@ -48,6 +49,9 @@ export class BoardLoadService {
       player_id: playerId,
       move: ""
     };
+
+    this.state = emptyState();
+    this.state.userColor = playerColor;
 
     return this.gameRequest(req);
   }
@@ -60,16 +64,16 @@ export class BoardLoadService {
           const err = state as GameApiError;
           // Illegal operation
           console.error(err.error);
-          if (this.positionsArray == null) {
+          if (this.state == null) {
             return [];
           } else {
-            return this.positionsArray;
+            return this.state.pieces;
           }
         } else {
           const resp = state as ResponseUser;
           const ret = this.fenDecode(resp.user.state);
-          this.positionsArray = ret;
-          return ret;
+          this.state = ret;
+          return ret.pieces;
         }
       })
     );
@@ -77,9 +81,9 @@ export class BoardLoadService {
 
   updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
     let captureChar = '';
-    if (this.positionsArray) {
+    if (this.state) {
       console.log(newPos);
-      for (const piece of this.positionsArray) {
+      for (const piece of this.state.pieces) {
         const isSamePos = piece.position.x == newPos.x && piece.position.y == newPos.y;
         if (isSamePos)
           captureChar = 'x';
@@ -99,7 +103,7 @@ export class BoardLoadService {
     return this.gameRequest(req);
   }
 
-  public fenDecode(fenString: string): ChessPiece[] {
+  public fenDecode(fenString: string): BoardState {
     console.log(`fenString is as follows: ${fenString}`);
     const fenFields = fenString.split(' ');
 
@@ -108,6 +112,11 @@ export class BoardLoadService {
       const errorString = `Invalid FEN string provided by server: ${fenString}. Reason: ${validation[1]}`
       console.error(errorString);
       throw new Error(errorString);
+    }
+
+    let decodedState = this.state;
+    if (!decodedState) {
+      throw new Error("State not initialized!");
     }
 
     const placement = fenFields[0]
@@ -137,8 +146,20 @@ export class BoardLoadService {
       currentX++;
     }
 
-    this.positionsArray = pieces;
-    return pieces;
+    decodedState.pieces = pieces;
+
+    decodedState.isWhiteMove = activeColor == 'w';
+    decodedState.castleables = castleable;
+    if (enPassant != '-') {
+      decodedState.enPassant = algebraicToPosition(enPassant);
+    } else {
+      decodedState.enPassant = null;
+    }
+
+    decodedState.halfmoveClock = Number(halfmoveClock);
+    decodedState.fullmoveNum = Number(fullmoveNumber);
+
+    return decodedState;
   }
 
   private validatePlacementField(field: string): [boolean, string] {
