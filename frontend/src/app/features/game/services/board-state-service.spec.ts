@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 
-import { BoardLoadService } from './board-load-service';
+import { BoardStateService } from './board-state-service';
 import { mockPositions } from './BoardState';
 
 describe('BoardLoadService', () => {
-  let service: BoardLoadService;
+  let service: BoardStateService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(BoardLoadService);
+    service = TestBed.inject(BoardStateService);
   });
 
   it('should be created', () => {
@@ -20,8 +20,8 @@ describe('BoardLoadService', () => {
 
     const mockPositionString = 'rnbqk3/p7/8/8/8/8/P7/RNBQK3 b KQkq - 0 1';
 
-    const createdPositions = service.fenDecode(mockPositionString);
+    service.fenDecode(mockPositionString);
 
-    expect(createdPositions).toStrictEqual(knownPositions);
+    expect(service.pieces()).toStrictEqual(knownPositions);
   })
 });

@@ -1,11 +1,11 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, switchMap } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
-import { algebraicToPosition, Position, positionToAlgebraic } from './pieces/Position';
+import { algebraicToPosition, Position, positionsEqual, positionToAlgebraic } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
-import { BoardState, emptyState } from './BoardState';
+import { BoardState, emptyState, GameStatus, parseGameStatus } from './BoardState';
 
 type GameRequest = {
   action: string;
@@ -30,18 +30,45 @@ type GameApiError = {
   error: string
 }
 
+interface Move {
+  pieceIdx: number;
+  targetPos: Position;
+}
+
 @Injectable({
   providedIn: 'root',
 })
-export class BoardLoadService {
+export class BoardStateService {
   private http = inject(HttpClient);
 
-  state: BoardState|null = null;
+  private _pieces = signal<ChessPiece[]>([]);
+  private _isOwnMove = signal<boolean>(false);
+  private _castleables = signal<string>('');
+  private _enPassant = signal<Position|null>(null);
+  private _halfmoveClock = signal<number>(-1);
+  private _fullmoveNum = signal<number>(-1);
+  private _userColor = signal<string>('');
+  private _nextMoves = signal<Move[]>([]);
+  private _gameStatus = signal<GameStatus>("Waiting");
+  private _playerId = signal<number>(-1);
+  private _gameId = signal<number>(-1);
+
+  readonly pieces = this._pieces.asReadonly();
+  readonly isOwnMove = this._isOwnMove.asReadonly();
+  readonly castleables = this._castleables.asReadonly();
+  readonly enPassant = this._enPassant.asReadonly();
+  readonly halfmoveClock = this._halfmoveClock.asReadonly();
+  readonly fullmoveNum = this._fullmoveNum.asReadonly();
+  readonly userColor = this._userColor.asReadonly();
+  readonly nextMoves = this._nextMoves.asReadonly();
+  readonly gameStatus = this._gameStatus.asReadonly();
+  readonly playerId = this._playerId.asReadonly();
+  readonly gameId = this._gameId.asReadonly();
 
   /**
-   * @returns {Map<string, ChessPiece} Indexed map of pieces on board with key of "[Position.x],[Position.y]".
+   * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */
-  boardLoad(gameId: number, playerId: number, playerColor: string): Observable<ChessPiece[]> {
+  boardLoad(gameId: number, playerId: number, playerColor: string): Observable<void> {
     // Load initial state
     const req: GameRequest = {
       action:"state",
@@ -50,13 +77,14 @@ export class BoardLoadService {
       move: ""
     };
 
-    this.state = emptyState();
-    this.state.userColor = playerColor;
+    this._playerId.update(_i => playerId);
+    this._gameId.update(_i => gameId);
+    this._userColor.update(_c => playerColor);
 
     return this.gameRequest(req);
   }
 
-  gameRequest(reqBody: GameRequest): Observable<ChessPiece[]> {
+  gameRequest(reqBody: GameRequest): Observable<void> {
     // Returns an observable after sequentially decoding JSON string and filtering into the map via rxjs pipe.
     return this.http.post<ResponseUser|GameApiError>(`${API_ENDPOINT}/api/game`, reqBody).pipe(
       map(state => {
@@ -64,30 +92,51 @@ export class BoardLoadService {
           const err = state as GameApiError;
           // Illegal operation
           console.error(err.error);
-          if (this.state == null) {
-            return [];
-          } else {
-            return this.state.pieces;
-          }
+          return;
         } else {
           const resp = state as ResponseUser;
-          const ret = this.fenDecode(resp.user.state);
-          this.state = ret;
-          return ret.pieces;
+          this.fenDecode(resp.user.state);
+          this._nextMoves.update(_p => resp.user.next_moves.map(move_str => {
+            let start: Position, finish: Position;
+
+            if (move_str.length == 5) {
+              // move_str == "a1xb1"
+              start = algebraicToPosition(move_str.slice(0, 2));
+              finish = algebraicToPosition(move_str.slice(3));
+            } else if (move_str.length == 4) {
+              // move_str == "a1b1"
+              start = algebraicToPosition(move_str.slice(0, 2));
+              finish = algebraicToPosition(move_str.slice(2));
+            } else {
+              console.error(`Invalid next move str: ${move_str}`);
+              throw new Error("Invalid next move str");
+            }
+
+            for (const [i, piece] of this._pieces().entries()) {
+              if (positionsEqual(piece.position, start)) {
+                return {pieceIdx: i, targetPos: finish};
+              }
+            }
+
+            console.error(`No piece found for target move ${move_str}`);
+            throw new Error(`No piece found for target move ${move_str}`);
+          }));
+;
+          this._gameStatus.update(_p => parseGameStatus(resp.user.status));
+          return;
         }
       })
     );
   }
 
-  updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<ChessPiece[]> {
+  updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
     let captureChar = '';
-    if (this.state) {
-      console.log(newPos);
-      for (const piece of this.state.pieces) {
-        const isSamePos = piece.position.x == newPos.x && piece.position.y == newPos.y;
-        if (isSamePos)
-          captureChar = 'x';
-      }
+    console.log('Moving:');
+    console.log(piece.position);
+    console.log(newPos);
+    for (const piece of this._pieces()) {
+      if (positionsEqual(piece.position, newPos))
+        captureChar = 'x';
     }
 
     const moveStr = `${positionToAlgebraic(piece.position)}${captureChar}${positionToAlgebraic(newPos)}`;
@@ -103,7 +152,7 @@ export class BoardLoadService {
     return this.gameRequest(req);
   }
 
-  public fenDecode(fenString: string): BoardState {
+  public fenDecode(fenString: string) {
     console.log(`fenString is as follows: ${fenString}`);
     const fenFields = fenString.split(' ');
 
@@ -112,11 +161,6 @@ export class BoardLoadService {
       const errorString = `Invalid FEN string provided by server: ${fenString}. Reason: ${validation[1]}`
       console.error(errorString);
       throw new Error(errorString);
-    }
-
-    let decodedState = this.state;
-    if (!decodedState) {
-      throw new Error("State not initialized!");
     }
 
     const placement = fenFields[0]
@@ -146,20 +190,18 @@ export class BoardLoadService {
       currentX++;
     }
 
-    decodedState.pieces = pieces;
+    this._pieces.update(_p => pieces);
 
-    decodedState.isWhiteMove = activeColor == 'w';
-    decodedState.castleables = castleable;
+    this._isOwnMove.update(_m => this.userColor() == activeColor);
+    this._castleables.update(_c => castleable);
     if (enPassant != '-') {
-      decodedState.enPassant = algebraicToPosition(enPassant);
+      this._enPassant.update(_e => algebraicToPosition(enPassant));
     } else {
-      decodedState.enPassant = null;
+      this._enPassant.update(_e => null);
     }
 
-    decodedState.halfmoveClock = Number(halfmoveClock);
-    decodedState.fullmoveNum = Number(fullmoveNumber);
-
-    return decodedState;
+    this._halfmoveClock.update(_c => Number(halfmoveClock));
+    this._fullmoveNum.update(_n => Number(fullmoveNumber));
   }
 
   private validatePlacementField(field: string): [boolean, string] {

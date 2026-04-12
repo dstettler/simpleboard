@@ -1,14 +1,14 @@
 <!-- Base board layout -->
 <div id="board" #board>
-    @if (boardState$ | async; as piecesArray) {
+    @if (boardPiecesObservable$ | async; as piecesArray) {
         <!-- Squares -->
         @for (square of grid; track $index) {
-            <div class="board-square" [class.dark]="isDarkSquare($index)"></div>    
+            <div class="board-square" [class.dark]="isDarkSquare($index)"></div>
         }
         <!-- Pieces -->
          @for (piece of piecesArray; track $index) {
-            <app-piece 
-                [piece]=piece 
+            <app-piece
+                [piece]=piece
                 [style.top]="(piece.position.x * 12.5) + '%'"
                 [style.left]="(piece.position.y * 12.5) + '%'"
                 [boardRef]="board"

@@ -1,6 +1,9 @@
 import { ChessPiece, Rook, Knight, Bishop, Queen, King, Pawn } from './pieces/ChessPiece';
 import { Position } from './pieces/Position';
 
+const gameStatusMembers = ["InProgress", "Waiting", "Error"] as const;
+export type GameStatus = typeof gameStatusMembers[number];
+
 export interface BoardState {
     pieces: ChessPiece[];
     isWhiteMove: boolean;
@@ -9,6 +12,17 @@ export interface BoardState {
     halfmoveClock: number;
     fullmoveNum: number;
     userColor: string;
+    nextMoves: string[];
+    gameStatus: GameStatus;
+}
+
+export function parseGameStatus(statusStr: string): GameStatus {
+  const found = gameStatusMembers.find((matched) => matched === statusStr);
+  if (found) {
+    return found;
+  }
+
+  return "Error";
 }
 
 export function emptyState(): BoardState {
@@ -19,7 +33,9 @@ export function emptyState(): BoardState {
       enPassant: null,
       halfmoveClock: -1,
       fullmoveNum: -1,
-      userColor: ''
+      userColor: '',
+      nextMoves: [],
+      gameStatus: "Waiting"
     };
 }
 
