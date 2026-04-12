@@ -5,7 +5,7 @@ import { map, Observable, switchMap } from 'rxjs';
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { algebraicToPosition, Position, positionsEqual, positionToAlgebraic } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
-import { BoardState, emptyState, GameStatus, parseGameStatus } from './BoardState';
+import { GameStatus, parseGameStatus } from './BoardState';
 
 type GameRequest = {
   action: string;
@@ -176,7 +176,6 @@ export class BoardStateService {
       for (const char of rank) {
         if (Number.isNaN(parseInt(char))) {
           pieces.push(getPieceFromFenCharacter(char, currentId, currentX, currentY));
-          console.log(`${currentX}, ${currentY}: ${char}`);
           currentId++;
           currentX++;
         } else {
@@ -199,8 +198,8 @@ export class BoardStateService {
       this._enPassant.update(_e => null);
     }
 
-    this._halfmoveClock.update(_c => Number(halfmoveClock));
-    this._fullmoveNum.update(_n => Number(fullmoveNumber));
+    this._halfmoveClock.update(_c => halfmoveClock);
+    this._fullmoveNum.update(_n => fullmoveNumber);
   }
 
   private validatePlacementField(field: string): [boolean, string] {
