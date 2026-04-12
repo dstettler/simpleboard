@@ -21,10 +21,12 @@ export class Board {
   boardPiecesObservable$ = toObservable(this.boardPieces);
 
   constructor() {
+    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
     this.stateService.boardLoad(1, 0, 'w').subscribe();
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
+    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
     this.stateService.updatePiecePosition(1, 0, piece, target).subscribe();
   }
 
