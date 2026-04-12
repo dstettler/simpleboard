@@ -11,7 +11,7 @@ export function newPosition(x: number, y: number): Position {
 }
 
 export function positionToAlgebraic(pos: Position): string {
-  return `${String.fromCharCode(97 + pos.y)}${8 - pos.x}`;
+  return `${String.fromCharCode(97 + pos.x)}${8 - pos.y}`;
 }
 
 export function algebraicToPosition(algebraicStr: string): Position {

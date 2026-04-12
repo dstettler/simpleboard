@@ -178,16 +178,17 @@ export class BoardStateService {
       for (const char of rank) {
         if (Number.isNaN(parseInt(char))) {
           pieces.push(getPieceFromFenCharacter(char, currentId, currentX, currentY));
+          console.log(`${currentX}, ${currentY}: ${char}`);
           currentId++;
-          currentY++;
+          currentX++;
         } else {
           const offset = parseInt(char);
-          currentY = currentY + offset;
+          currentX = currentX + offset;
         }
       }
 
-      currentY = 0;
-      currentX++;
+      currentX = 0;
+      currentY++;
     }
 
     this._pieces.update(_p => pieces);
