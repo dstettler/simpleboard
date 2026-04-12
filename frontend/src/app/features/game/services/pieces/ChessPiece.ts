@@ -4,11 +4,13 @@ export abstract class ChessPiece {
     id: number;
     isWhite: boolean;
     position: Position;
+    enabled: boolean;
 
     constructor(id: number, isWhite: boolean, posX: number, posY: number) {
         this.id = id;
         this.isWhite = isWhite;
         this.position = newPosition(posX, posY)
+        this.enabled = false;
     }
 
     abstract getClass(): string;

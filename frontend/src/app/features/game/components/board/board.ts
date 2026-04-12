@@ -1,6 +1,5 @@
-import { Component, effect, inject, Signal } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { Observable } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { BoardStateService } from '../../services/board-state-service';
@@ -26,7 +25,7 @@ export class Board {
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    this.stateService.updatePiecePosition(1, 0, piece, target)
+    this.stateService.updatePiecePosition(1, 0, piece, target).subscribe();
   }
 
   isDarkSquare(i: number): boolean {

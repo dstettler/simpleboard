@@ -114,6 +114,7 @@ export class BoardStateService {
 
             for (const [i, piece] of this._pieces().entries()) {
               if (positionsEqual(piece.position, start)) {
+                this._pieces.update(p => { p[i].enabled = true; return p; });
                 return {pieceIdx: i, targetPos: finish};
               }
             }
@@ -131,9 +132,6 @@ export class BoardStateService {
 
   updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
     let captureChar = '';
-    console.log('Moving:');
-    console.log(piece.position);
-    console.log(newPos);
     for (const piece of this._pieces()) {
       if (positionsEqual(piece.position, newPos))
         captureChar = 'x';

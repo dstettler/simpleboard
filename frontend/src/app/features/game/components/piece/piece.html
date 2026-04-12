@@ -2,6 +2,7 @@
     cdkDrag
     [cdkDragBoundary]="'#board'"
     [cdkDragFreeDragPosition]="dragPosition"
-    (cdkDragEnded)="onDragEnded($event)">
+    (cdkDragEnded)="onDragEnded($event)"
+     [cdkDragDisabled]="!piece.enabled">
     <img class="chess-piece" src="{{ piece.getImageUrl() }}" />
 </div>
