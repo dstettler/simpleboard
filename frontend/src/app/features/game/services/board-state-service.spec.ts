@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { BoardStateService } from './board-state-service';
 import { ChessPiece, Rook, Knight, Bishop, Queen, King, Pawn } from './pieces/ChessPiece';
-import { positionToAlgebraic, algebraicToPosition } from './pieces/Position';
+import { positionToAlgebraic, algebraicToPosition, positionsEqual } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
 
 export const mockBoardStateResponse = { user: {
@@ -86,5 +86,11 @@ describe('BoardStateService', () => {
     expect(positionToAlgebraic({x: 0, y: 7})).toBe('a1');
     expect(positionToAlgebraic({x: 7, y: 0})).toBe('h8');
     expect(positionToAlgebraic({x: 7, y: 7})).toBe('h1');
+  });
+
+  it('should determine position equality properly', () => {
+    expect(positionsEqual({x: 0, y: 1}, {x: 0, y: 1})).toBe(true);
+    expect(positionsEqual({x: 0, y: 0}, {x: 0, y: 1})).toBe(false);
+    expect(positionsEqual({x: 1, y: 1}, {x: 0, y: 1})).toBe(false);
   });
 });
