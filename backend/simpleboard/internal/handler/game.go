@@ -93,7 +93,7 @@ func Game(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "game created",
+			"message": "state",
 			"user": gin.H{
 				"game_id":         entry.ID,
 				"white_player_id": entry.WhitePlayerID,
@@ -133,7 +133,11 @@ func Game(c *gin.Context) {
 
 		game := chess.ReadChessGame(entry.State, moves, prevmoves)
 
-		game.Move(input.Move)
+		moveErr := game.Move(input.Move)
+		if moveErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": moveErr.Error()})
+			return
+		}
 
 		nextMovesStr := []string{}
 		for _, m := range game.NextMoves {
@@ -163,6 +167,11 @@ func Game(c *gin.Context) {
 		}
 
 		db.DB.Save(&updatedEntry)
+
+		if err := db.DB.Where("id = ?", input.GameID).First(&entry).Error; err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid game id"})
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "move applied",
