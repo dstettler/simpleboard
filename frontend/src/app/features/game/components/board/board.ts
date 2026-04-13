@@ -1,8 +1,8 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { Observable } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
-import { BoardLoadService } from '../../services/board-load-service';
+import { BoardStateService } from '../../services/board-state-service';
 import { Piece } from '../piece/piece';
 import { ChessPiece } from '../../services/pieces/ChessPiece';
 import { Position } from '../../services/pieces/Position';
@@ -16,13 +16,18 @@ import { Position } from '../../services/pieces/Position';
 export class Board {
   grid = Array.from({ length: 64 });
 
-  private loadService = inject(BoardLoadService);
-  boardState$: Observable<ChessPiece[]> = this.loadService.boardLoad(1, 0);
+  private stateService = inject(BoardStateService);
+  boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
+  boardPiecesObservable$ = toObservable(this.boardPieces);
 
-  constructor() {}
+  constructor() {
+    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
+    this.stateService.boardLoad(1, 0, 'w').subscribe();
+  }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    this.boardState$ = this.loadService.updatePiecePosition(1, 0, piece, target)
+    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
+    this.stateService.updatePiecePosition(1, 0, piece, target).subscribe();
   }
 
   isDarkSquare(i: number): boolean {
