@@ -3,9 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { Board } from './board';
+import { mockBoardStateResponse } from '../../services/board-state-service.spec';
 import { API_ENDPOINT } from '../../../../app.constants';
-
-export const mockBoardStateResponse = { user: { "state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"  } };
 
 describe('Board', () => {
   let component: Board;

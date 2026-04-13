@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { Game } from './game';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { mockBoardStateResponse } from './components/board/board.spec';
-
+import { Game } from './game';
 import { API_ENDPOINT } from '../../app.constants'
+import { mockBoardStateResponse } from './services/board-state-service.spec';
 
 describe('Game', () => {
   let component: Game;
