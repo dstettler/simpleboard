@@ -3,11 +3,12 @@ import { LoginComponent } from './features/auth/login/login';
 import { HomeComponent } from './features/home/home';
 import { DashboardComponent } from './dashboard/dashboard';
 import { Game } from './features/game/game';
+import { authGuard } from './core/services/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'game', component: Game },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'game/:id', component: Game },
   { path: '**', redirectTo: '' }
 ];

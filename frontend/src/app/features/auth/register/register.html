@@ -1,0 +1,70 @@
+<div class="login-container">
+  <h2>Create Account</h2>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+    <div class="form-group">
+      <label>Username</label>
+      <input
+        type="text"
+        formControlName="username"
+        [class.input-error]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
+      />
+
+      @if (registerForm.get('username')?.touched && registerForm.get('username')?.invalid) {
+        <small>
+          Username is required
+        </small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label>Email</label>
+      <input
+        type="email"
+        formControlName="email"
+        [class.input-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+      />
+
+      @if (registerForm.get('email')?.touched && registerForm.get('email')?.invalid) {
+        <small>
+          Enter a valid email
+        </small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input
+        type="password"
+        formControlName="password"
+        [class.input-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+      />
+
+      @if (registerForm.get('password')?.touched && registerForm.get('password')?.invalid) {
+        <small>
+          Password must be at least 6 characters
+        </small>
+      }
+    </div>
+
+    @if (authError) {
+      <div class="auth-error">
+        {{ authError }}
+      </div>
+    }
+
+    <button type="submit" [disabled]="registerForm.invalid || isLoading">
+      @if (!isLoading) {
+        <span>Register</span>
+      } @else {
+        <span>Creating...</span>
+      }
+    </button>
+
+    <p class="auth-switch">
+      Already have an account?
+      <a routerLink="/login">Login</a>
+    </p>
+  </form>
+</div>
