@@ -9,6 +9,8 @@ import (
 type Game struct {
 	WhitePlayerID uint
 	BlackPlayerID uint
+	WhiteGuestID  string
+	BlackGuestID  string
 	State         string
 	Status        string
 	Side          string

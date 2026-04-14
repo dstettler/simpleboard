@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"simpleboard/api"
+	"simpleboard/internal/auth"
 	"simpleboard/pkg/config"
 	"simpleboard/pkg/db"
 )
@@ -12,6 +13,9 @@ import (
 func main() {
 	// load env config
 	cfg := config.Load()
+
+	// initialize auth middleware
+	auth.Init(cfg)
 
 	// connect the db
 	db.Connect(cfg)

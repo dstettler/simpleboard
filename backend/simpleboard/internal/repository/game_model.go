@@ -11,6 +11,8 @@ type Game struct {
 	ID            uint           `gorm:"uniqueIndex;primaryKey;autoIncrement`
 	WhitePlayerID uint           `json:"white_player_id"`
 	BlackPlayerID uint           `json:"black_player_id"`
+	WhiteGuestID  string         `json:"white_guest_id"`
+	BlackGuestID  string         `json:"black_guest_id"`
 	State         string         `json:"state"`
 	Status        string         `json:"status"`
 	Side          string         `gorm:"size:1; not null"`
