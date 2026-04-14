@@ -7,11 +7,10 @@
 
 ## Work Completed
 ### Frontend
-- Added FEN string validation and unit tests
-- Added Cypress e2e tests
-- Added registration form
-- Added homepage
-- Fixed routing issues
+- Added local rule checking to enable/disable piece movement
+- Added state polling on off-turns
+- Added authentication with backend
+- Added game routing
 ### Backend
 - Final chess engine w/ full rule support
 - JWT authentication
@@ -29,6 +28,9 @@
 - Board component instantiates successfully
 - BoardLoadService instantiates successfully
 - FEN string validation functions as expected
+- Validate algebraic strings
+- Validate position->algebraic logic
+- Validate loaded board state
 ### Cypress Tests
 - `cypress/e2e/home.cy.ts`  
   - Verifies the home page loads successfully
