@@ -196,7 +196,7 @@
 === RUN   TestMoveStalemateDetected
 --- PASS: TestMoveStalemateDetected (0.00s)
 PASS
-ok      simpleboard/internal/chess      0.003s
+ok      simpleboard/internal/chess      0.783s
 ```
 
 ## Backend API Docs
