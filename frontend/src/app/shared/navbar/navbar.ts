@@ -22,10 +22,19 @@ export class NavbarComponent {
     this.isCreating = true;
 
     this.gameService.createGame().subscribe({
-      next: (res) => {
-        this.router.navigate(['/game', res.gameId]);
+      next: (res: any) => {
+        console.log('Game created:', res);
+
+        // ✅ store game in service (important for /game route)
+        this.gameService.setGame(res);
+
+        // ✅ navigate WITHOUT id
+        this.router.navigate(['/game']);
+
+        this.isCreating = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Game creation failed:', err);
         this.isCreating = false;
       }
     });
