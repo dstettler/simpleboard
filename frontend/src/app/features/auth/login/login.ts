@@ -66,6 +66,10 @@ export class LoginComponent {
       next: (response) => {
         this.isLoading = false;
         this.authState.setLoggedIn(true);
+        console.log(`setting uid ${response.user.user_id}`);
+        this.authState.setUserId(response.user.user_id.toString());
+        const token = response.token;
+        localStorage.setItem("token", token);
         this.successMessage = response.message;
         this.router.navigate(['/dashboard']);
       },

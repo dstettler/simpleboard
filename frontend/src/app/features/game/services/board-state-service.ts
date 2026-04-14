@@ -16,7 +16,7 @@ type GameRequest = {
 }
 
 type ResponseUser = {
-  user: GameApiResponse
+  state: GameApiResponse
 }
 
 type GameApiResponse = {
@@ -40,6 +40,7 @@ interface Move {
 
 export type PlayerColor = 'w' | 'b' | null;
 
+@Injectable({ providedIn: 'root' })
 export class BoardStateService {
   private http = inject(HttpClient);
 
@@ -120,10 +121,10 @@ export class BoardStateService {
           if (this.userColor() == null) {
             console.log('setting user color')
             switch (this.playerId()) {
-              case Number(resp.user.black_player_id):
+              case Number(resp.state.black_player_id):
                 this._userColor.update(_ => 'b');
                 break;
-              case Number(resp.user.white_player_id):
+              case Number(resp.state.white_player_id):
                 this._userColor.update(_ => 'w');
                 break;
               default:
@@ -132,8 +133,8 @@ export class BoardStateService {
             }
           }
 
-          this.fenDecode(resp.user.state);
-          this._nextMoves.update(_p => resp.user.next_moves.map(move_str => {
+          this.fenDecode(resp.state.state);
+          this._nextMoves.update(_p => resp.state.next_moves.map(move_str => {
             let start: Position, finish: Position;
 
             if (move_str.length == 5) {
@@ -162,7 +163,7 @@ export class BoardStateService {
             throw new Error(`No piece found for target move ${move_str}`);
           }));
 
-          this._gameStatus.update(_p => parseGameStatus(resp.user.status));
+          this._gameStatus.update(_p => parseGameStatus(resp.state.status));
           if (this.isOwnMove()) {
             this._pollBackend.update(_ => false);
           } else {
