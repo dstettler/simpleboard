@@ -9,6 +9,6 @@ export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-  { path: 'game', component: Game },
+  { path: 'game/:id', component: Game },
   { path: '**', redirectTo: '' }
 ];

@@ -1,31 +1,41 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { GameService } from '../../core/services/game.service';
 import { Board } from './components/board/board';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [Board], 
+  imports: [Board],
   templateUrl: './game.html',
   styleUrl: './game.css'
 })
 export class Game implements OnInit {
-  private gameService = inject(GameService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private gameService = inject(GameService);
 
   game: any;
 
-  ngOnInit() {
-    this.game = this.gameService.getGame();
+  ngOnInit(): void {
+    const gameId = this.route.snapshot.paramMap.get('id');
 
-    
-    if (!this.game) {
-      console.warn('No game found, redirecting...');
+    if (!gameId) {
+      console.warn('No game id found');
       this.router.navigate(['/']);
       return;
     }
 
-    console.log('Loaded game:', this.game);
+    console.log('Game ID:', gameId);
+
+    this.gameService.getGame(gameId).subscribe({
+      next: (res: any) => {
+        console.log('Loaded game:', res);
+        this.game = res;
+      },
+      error: (err: any) => {
+        console.error('Failed to load game:', err);
+      }
+    });
   }
 }
