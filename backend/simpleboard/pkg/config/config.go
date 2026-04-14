@@ -12,6 +12,7 @@ type Config struct {
 	ServerAddress string
 	DBPath        string
 	CORSOrigins   []string
+	JWTSecret     string
 }
 
 // Loads the config by getting env defined variables
@@ -23,6 +24,7 @@ func Load() *Config {
 		ServerAddress: ":" + strconv.Itoa(port),
 		DBPath:        getEnv("DB_PATH", "./simpleboard.db"),
 		CORSOrigins:   getEnvList("CORS_ORIGINS", []string{"http://localhost:4200"}),
+		JWTSecret:     getEnv("JWT_SECRET", "no-secret"),
 	}
 }
 

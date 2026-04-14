@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	//"simpleboard/internal/domain"
+	"simpleboard/internal/auth"
 	"simpleboard/internal/repository"
 	"simpleboard/pkg/db"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -37,9 +40,18 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// serve new login token
+	token, err := auth.NewUserToken(user.UserID, 24*time.Hour)
+	if err != nil {
+		fmt.Print(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
+		return
+	}
+
 	// user successfully logged in
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
+		"token":   token,
 		"user": gin.H{
 			"user_id":  user.UserID,
 			"username": user.Username,
