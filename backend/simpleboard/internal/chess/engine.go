@@ -45,11 +45,16 @@ func (g *ChessGame) Move(moveStr string) error {
 			}
 
 			legalMoves := g.LegalMoves() // generate next set of legal moves
-			if len(legalMoves) == 0 {    // checkmate
-				if g.Side == "w" {
-					g.Status = WinBlack
-				} else {
-					g.Status = WinWhite
+			if len(legalMoves) == 0 {
+				kr, kf := g.KingCoords(g.Side == "w")
+				if g.IsAttacked(kr, kf) { // checkmate
+					if g.Side == "w" {
+						g.Status = WinBlack
+					} else {
+						g.Status = WinWhite
+					}
+				} else { // stalemate
+					g.Status = Draw
 				}
 			}
 			g.NextMoves = legalMoves
@@ -62,7 +67,7 @@ func (g *ChessGame) Move(moveStr string) error {
 
 // Generates legal moves from an array of possible move patterns
 func (g *ChessGame) LegalMoves() []Move {
-	plm := g.PositionMoves() // get possibly legal moves
+	plm := g.PositionMoves()
 	moves := []Move{}
 
 	kr, kf := g.KingCoords(g.Side == "w")
@@ -79,11 +84,14 @@ func (g *ChessGame) LegalMoves() []Move {
 		// check king
 		if !copy.IsAttacked(kr, kf) {
 
-			// castling rule verification: cannot pass through attacked spaces
+			// cannot castle out of check or through attacked squares
 			if m.Castling {
+				if g.IsAttacked(m.SR, m.SF) {
+					continue // castling is illegal
+				}
 				if !checkCastlePassthrough(g, m) {
 					continue
-				} // do not append
+				}
 			}
 
 			moves = append(moves, m)
@@ -324,10 +332,9 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 		nr, nf := r+v[0], f+v[1]
 		if nr < 0 || nr > 7 || nf < 0 || nf > 7 {
 			continue
-		} // out of bounds
+		}
 		t := b[nr][nf]
 
-		// determine same color / capture of target square piece / empty space
 		if t == EMPTY {
 			moves = append(moves, Move{r, f, nr, nf, false, false, ""})
 			continue
@@ -337,20 +344,24 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 		}
 	}
 
-	// castling move generation; legality checked later
+	// castling move generation
 	for i := 0; i < len(g.Castle); i++ {
-		c := string(g.Castle[i]) // get single castling entry
+		c := string(g.Castle[i])
 		var cm Move
 		kingside := true
 		available := true
+		matched := false
+
 		if utils.IsUpper(c) {
 			if white {
 				if c == "K" { // O-O
 					cm = ParseMoveStr("e1g1")
+					matched = true
 				}
 				if c == "Q" { // O-O-O
 					kingside = false
 					cm = ParseMoveStr("e1c1")
+					matched = true
 				}
 			}
 		}
@@ -358,12 +369,18 @@ func (g *ChessGame) generateKingMoves(r, f int, white bool) []Move {
 			if !white {
 				if c == "k" { // o-o
 					cm = ParseMoveStr("e8g8")
+					matched = true
 				}
 				if c == "q" { // o-o-o
 					kingside = false
 					cm = ParseMoveStr("e8c8")
+					matched = true
 				}
 			}
+		}
+
+		if !matched {
+			continue
 		}
 
 		if kingside && (b[cm.SR][cm.SF+1] != EMPTY || b[cm.SR][cm.SF+2] != EMPTY) {
@@ -596,6 +613,21 @@ func (g *ChessGame) IsAttacked(r, f int) bool {
 
 			s += 1
 			nr, nf = int(r+(s*v[0])), int(f+(s*v[1]))
+		}
+	}
+
+	// check adjacent enemy king
+	attackerKing := "k"
+	if white {
+		attackerKing = "K"
+	}
+	for _, v := range kingVectors {
+		nr, nf := r+v[0], f+v[1]
+		if nr < 0 || nr > 7 || nf < 0 || nf > 7 {
+			continue
+		}
+		if b[nr][nf] == attackerKing {
+			return true
 		}
 	}
 
