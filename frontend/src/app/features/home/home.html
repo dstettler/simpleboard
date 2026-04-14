@@ -21,12 +21,13 @@
       </p>
 
       <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <a
-          routerLink="/login"
-          class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
-        >
-          Play Now
-        </a>
+        <button
+  type="button"
+  (click)="onStartGame()"
+  class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
+>
+  Play Now
+</button>
 
         <a
           href="#features"
@@ -139,12 +140,12 @@
       </p>
 
       <div class="mt-8">
-        <a
-          routerLink="/game"
+        <button
+          (click)="onStartGame()"
           class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
         >
           Play Now
-        </a>
+        </button>
       </div>
     </div>
   </section>
