@@ -1,4 +1,4 @@
-# Sprint 2
+# Sprint 3
 ### Group : SimpleBoard
 - TJ Schultz (Backend)
 - Devon Stettler (Frontend)
@@ -13,7 +13,11 @@
 - Added homepage
 - Fixed routing issues
 ### Backend
-- 
+- Final chess engine w/ full rule support
+- JWT authentication
+  - Login authentication
+  - Game endpoint authentication
+- CORS fixes
 
 ## Tests (Frontend)
 ### Unit Tests
