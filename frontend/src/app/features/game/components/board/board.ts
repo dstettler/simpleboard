@@ -2,7 +2,7 @@ import { Component, inject, Signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { BoardStateService } from '../../services/board-state-service';
+import { BoardStateService, PlayerColor } from '../../services/board-state-service';
 import { Piece } from '../piece/piece';
 import { ChessPiece } from '../../services/pieces/ChessPiece';
 import { Position } from '../../services/pieces/Position';
@@ -17,12 +17,15 @@ export class Board {
   grid = Array.from({ length: 64 });
 
   private stateService = inject(BoardStateService);
+
   boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
+  side: Signal<PlayerColor> = this.stateService.userColor;
   boardPiecesObservable$ = toObservable(this.boardPieces);
+  sideObservable$ = toObservable(this.side);
 
   constructor() {
     // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
-    this.stateService.boardLoad(1, 0, 'w').subscribe();
+    this.stateService.boardLoad(1, 0).subscribe();
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
