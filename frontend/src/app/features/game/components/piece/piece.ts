@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CdkDrag, CdkDragEnd } from '@angular/cdk/drag-drop';
 
 import { ChessPiece } from '../../services/pieces/ChessPiece';
-import { newPosition, Position } from '../../services/pieces/Position';
+import { newPosition, Position, positionsEqual } from '../../services/pieces/Position';
 
 @Component({
   selector: 'app-piece',
@@ -28,8 +28,11 @@ export class Piece {
 
     const clampedRow = Math.max(0, Math.min(7, newRow));
     const clampedCol = Math.max(0, Math.min(7, newCol));
+    const newPos = newPosition(clampedRow, clampedCol);
 
-    this.moved.emit(newPosition(clampedRow, clampedCol));
+    if (!positionsEqual(newPos, this.piece.position)) {
+      this.moved.emit(newPos);
+    }
 
     // This is necessary to reset cdkDrag's internal offset each time state is updated,
     // since the position is determined via style in the board component.

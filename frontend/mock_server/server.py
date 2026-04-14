@@ -7,7 +7,7 @@ CORS(app)
 state_iter = 0
 game_states = {
     0: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    1: "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 1"
+    1: "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1"
 }
 registrations_iter = 0
 registrations = {}
@@ -66,6 +66,7 @@ def game():
         "state": game_states[min(1, state_iter)],
         "next_moves": ["a2a3"],
         "side": "w",
+        "status": "InProgress",
         "white_player_id": 0,
         "black_player_id": 1
       }})
@@ -75,6 +76,7 @@ def game():
       "user": {
         "state": game_states[min(1, state_iter)],
         "next_moves": ["a3a4"],
+        "status": "InProgress",
         "side": "b",
         "white_player_id": 0,
         "black_player_id": 1

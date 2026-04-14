@@ -1,12 +1,13 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable, switchMap } from 'rxjs';
+import { EMPTY, map, Observable, switchMap, timer } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { algebraicToPosition, Position, positionsEqual, positionToAlgebraic } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
 import { GameStatus, parseGameStatus } from './BoardState';
 
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 type GameRequest = {
   action: string;
   game_id: number;
@@ -22,6 +23,8 @@ type GameApiResponse = {
   state: string;
   status: string;
   side: string;
+  black_player_id: string;
+  white_player_id: string;
   next_moves: string[]
   prev_moves: string[]
 }
@@ -35,9 +38,8 @@ interface Move {
   targetPos: Position;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+export type PlayerColor = 'w' | 'b' | null;
+
 export class BoardStateService {
   private http = inject(HttpClient);
 
@@ -47,11 +49,12 @@ export class BoardStateService {
   private _enPassant = signal<Position|null>(null);
   private _halfmoveClock = signal<number>(-1);
   private _fullmoveNum = signal<number>(-1);
-  private _userColor = signal<string>('');
+  private _userColor = signal<PlayerColor>(null);
   private _nextMoves = signal<Move[]>([]);
   private _gameStatus = signal<GameStatus>("Waiting");
   private _playerId = signal<number>(-1);
   private _gameId = signal<number>(-1);
+  private _pollBackend = signal<boolean>(false);
 
   readonly pieces = this._pieces.asReadonly();
   readonly isOwnMove = this._isOwnMove.asReadonly();
@@ -64,11 +67,28 @@ export class BoardStateService {
   readonly gameStatus = this._gameStatus.asReadonly();
   readonly playerId = this._playerId.asReadonly();
   readonly gameId = this._gameId.asReadonly();
+  private readonly pollBackend = this._pollBackend.asReadonly();
+
+  private poll$ = toObservable(this.pollBackend).pipe(
+    switchMap(p => p ? timer(0, 5000) : EMPTY),
+    switchMap(() => {
+      if (this.playerId() != -1 && this.gameId() != -1) {
+        return this.boardLoad(this.gameId(), this.playerId())
+      } else {
+        return EMPTY;
+      }
+    }),
+    takeUntilDestroyed()
+  )
+
+  constructor() {
+    this.poll$.subscribe();
+  }
 
   /**
    * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */
-  boardLoad(gameId: number, playerId: number, playerColor: string): Observable<void> {
+  boardLoad(gameId: number, playerId: number): Observable<void> {
     // Load initial state
     const req: GameRequest = {
       action:"state",
@@ -79,7 +99,6 @@ export class BoardStateService {
 
     this._playerId.update(_i => playerId);
     this._gameId.update(_i => gameId);
-    this._userColor.update(_c => playerColor);
 
     return this.gameRequest(req);
   }
@@ -95,6 +114,24 @@ export class BoardStateService {
           return;
         } else {
           const resp = state as ResponseUser;
+
+          // User color should only need to be updated once.
+          // This must happen before decoding state so pieces can be enabled.
+          if (this.userColor() == null) {
+            console.log('setting user color')
+            switch (this.playerId()) {
+              case Number(resp.user.black_player_id):
+                this._userColor.update(_ => 'b');
+                break;
+              case Number(resp.user.white_player_id):
+                this._userColor.update(_ => 'w');
+                break;
+              default:
+                console.error("Player id matches neither side.");
+                throw new Error("Player id matches neither side.");
+            }
+          }
+
           this.fenDecode(resp.user.state);
           this._nextMoves.update(_p => resp.user.next_moves.map(move_str => {
             let start: Position, finish: Position;
@@ -113,8 +150,10 @@ export class BoardStateService {
             }
 
             for (const [i, piece] of this._pieces().entries()) {
+              const pieceIsUserColor = piece.isWhite == (this.userColor() == 'w');
+              const pieceEnableable = this.isOwnMove() && pieceIsUserColor;
               if (positionsEqual(piece.position, start)) {
-                this._pieces.update(p => { p[i].enabled = true; return p; });
+                this._pieces.update(p => { p[i].enabled = pieceEnableable; return p; });
                 return {pieceIdx: i, targetPos: finish};
               }
             }
@@ -122,8 +161,14 @@ export class BoardStateService {
             console.error(`No piece found for target move ${move_str}`);
             throw new Error(`No piece found for target move ${move_str}`);
           }));
-;
+
           this._gameStatus.update(_p => parseGameStatus(resp.user.status));
+          if (this.isOwnMove()) {
+            this._pollBackend.update(_ => false);
+          } else {
+            this._pollBackend.update(_ => true);
+          }
+
           return;
         }
       })
