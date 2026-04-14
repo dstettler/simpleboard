@@ -4,7 +4,7 @@ import { EMPTY, map, Observable, switchMap, timer } from 'rxjs';
 
 import { ChessPiece, getPieceFromFenCharacter } from './pieces/ChessPiece';
 import { algebraicToPosition, Position, positionsEqual, positionToAlgebraic } from './pieces/Position';
-import { API_ENDPOINT } from '../../../app.constants';
+import { API_ENDPOINT, BACKEND_PING_RATE_MS } from '../../../app.constants';
 import { GameStatus, parseGameStatus } from './BoardState';
 
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -70,7 +70,7 @@ export class BoardStateService {
   private readonly pollBackend = this._pollBackend.asReadonly();
 
   private poll$ = toObservable(this.pollBackend).pipe(
-    switchMap(p => p ? timer(0, 5000) : EMPTY),
+    switchMap(p => p ? timer(0, BACKEND_PING_RATE_MS) : EMPTY),
     switchMap(() => {
       if (this.playerId() != -1 && this.gameId() != -1) {
         return this.boardLoad(this.gameId(), this.playerId())
