@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../auth.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 
 @Component({
   selector: 'app-login',
@@ -11,28 +14,27 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private authState = inject(AuthStateService);
+
   loginForm: FormGroup;
   registerForm: FormGroup;
 
-  authError: string = '';
-  successMessage: string = '';
-  isLoading: boolean = false;
-  isRegisterMode: boolean = false;
+  authError = '';
+  successMessage = '';
+  isLoading = false;
+  isRegisterMode = false;
 
-  private testUser = {
-    email: 'test@chess.com',
-    password: '123456'
-  };
-
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor() {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
     this.registerForm = this.fb.group({
-      userId: ['', [Validators.required, Validators.minLength(3)]],
-      name: ['', [Validators.required]],
+      username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
@@ -55,36 +57,52 @@ export class LoginComponent {
     this.successMessage = '';
     this.isLoading = true;
 
-    const { email, password } = this.loginForm.value;
+    const payload = {
+      username: this.loginForm.value.username ?? '',
+      password: this.loginForm.value.password ?? ''
+    };
 
-    setTimeout(() => {
-      if (email === this.testUser.email && password === this.testUser.password) {
+    this.authService.login(payload).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.authState.setLoggedIn(true);
+        this.successMessage = response.message;
         this.router.navigate(['/dashboard']);
-      } else {
-        this.authError = 'Invalid email or password';
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        this.authError = error.error?.message || 'Login failed';
       }
-
-      this.isLoading = false;
-    }, 1000);
+    });
   }
 
   onRegister() {
-  if (this.registerForm.invalid) {
-    this.registerForm.markAllAsTouched();
-    return;
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      return;
+    }
+
+    this.authError = '';
+    this.successMessage = '';
+    this.isLoading = true;
+
+    const payload = {
+      username: this.registerForm.value.username ?? '',
+      email: this.registerForm.value.email ?? '',
+      password: this.registerForm.value.password ?? ''
+    };
+
+    this.authService.register(payload).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.successMessage = response.message;
+        this.isRegisterMode = false;
+        this.registerForm.reset();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
+        this.authError = error.error?.message || 'Registration failed';
+      }
+    });
   }
-
-  this.authError = '';
-  this.successMessage = '';
-  this.isLoading = true;
-
-  setTimeout(() => {
-    console.log('Registered user:', this.registerForm.value);
-
-    this.isLoading = false;
-    this.successMessage = 'Successfully Registered';
-
-    this.registerForm.reset();
-  }, 1000);
-}
 }
