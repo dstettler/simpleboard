@@ -28,15 +28,11 @@ export class Board {
   sideObservable$ = toObservable(this.side);
 
   ngOnInit() {
-    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
     const userId = Number(this.authService.userId());
-    console.log(`uid ${userId}`);
-    console.log(`gid ${this.gameId}`);
     this.stateService.boardLoad(Number(this.gameId), userId).subscribe();
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
     const userId = Number(this.authService.userId());
     this.stateService.updatePiecePosition(Number(this.gameId), userId, piece, target).subscribe();
   }
