@@ -1,9 +1,16 @@
 <!-- Base board layout -->
 <div id="board" #board>
     @if (boardPiecesObservable$ | async; as piecesArray) {
-        <!-- Squares -->
+
+    <!-- Squares -->
         @for (square of grid; track $index) {
-            <div class="board-square" [class.dark]="isDarkSquare($index)"></div>
+            <div class="board-square" [class.dark]="isDarkSquare($index)">
+              @if (targetableObservable$ | async; as targetables) {
+                @if (isTargetable($index, targetables)) {
+                  <span class="targetable"></span>
+                }
+              }
+            </div>
         }
         <!-- Pieces -->
          @for (piece of piecesArray; track $index) {
@@ -12,6 +19,7 @@
                 [style.top]="(piece.position.y * 12.5) + '%'"
                 [style.left]="(piece.position.x * 12.5) + '%'"
                 [boardRef]="board"
+                (pieceSelected)="onPieceSelected(piece)"
                 (moved)="onPieceMoved(piece, $event)"
                 ></app-piece>
          }

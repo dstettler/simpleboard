@@ -1,11 +1,11 @@
-import { Component, inject, Input, Signal } from '@angular/core';
+import { Component, inject, Input, signal, Signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { BoardStateService, PlayerColor } from '../../services/board-state-service';
 import { Piece } from '../piece/piece';
 import { ChessPiece } from '../../services/pieces/ChessPiece';
-import { Position } from '../../services/pieces/Position';
+import { Position, positionsEqual, positionToAlgebraic } from '../../services/pieces/Position';
 
 import { AuthStateService } from '../../../../core/services/auth-state.service';
 @Component({
@@ -22,14 +22,28 @@ export class Board {
   private stateService = inject(BoardStateService);
   private authService = inject(AuthStateService);
 
-  boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
-  side: Signal<PlayerColor> = this.stateService.userColor;
-  boardPiecesObservable$ = toObservable(this.boardPieces);
-  sideObservable$ = toObservable(this.side);
+  // Readonly signals
+  private boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
+  private side: Signal<PlayerColor> = this.stateService.userColor;
+
+  // Writeable signals
+  private targetable = signal<Position[]|null>(null);
+
+  // Derived observables
+  readonly boardPiecesObservable$ = toObservable(this.boardPieces);
+  readonly sideObservable$ = toObservable(this.side);
+  readonly targetableObservable$ = toObservable(this.targetable);
 
   ngOnInit() {
     const userId = Number(this.authService.userId());
     this.stateService.boardLoad(Number(this.gameId), userId).subscribe();
+  }
+
+  onPieceSelected(piece: ChessPiece) {
+    console.log('piece selected');
+    const targetables = this.stateService.getTargetables(piece.id);
+    console.log(`new targetables: ${targetables}`);
+    this.targetable.update(_t => targetables);
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
@@ -38,8 +52,21 @@ export class Board {
   }
 
   isDarkSquare(i: number): boolean {
-    const row = Math.floor(i / 8)
+    const row = Math.floor(i / 8);
     const col = i % 8;
-    return (row + col) % 2 !== 0
+    return (row + col) % 2 !== 0;
+  }
+
+  isTargetable(i: number, targetables: Position[]): boolean {
+    const row = Math.floor(i / 8);
+    const col = i % 8;
+    const squarePos: Position = {x: col, y: row};
+    for (const targetablePos of targetables) {
+      if (positionsEqual(targetablePos, squarePos)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

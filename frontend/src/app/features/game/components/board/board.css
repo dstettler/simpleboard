@@ -22,3 +22,7 @@
 .board-square.dark {
     background-color: black;
 }
+
+.targetable {
+    background-color: blue;
+}

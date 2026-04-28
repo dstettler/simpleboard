@@ -86,6 +86,18 @@ export class BoardStateService {
     this.poll$.subscribe();
   }
 
+  public getTargetables(pieceId: number): Position[]|null {
+    const currentMoves = this.nextMoves();
+    let availableMoves = [];
+    for (const move of currentMoves) {
+      if (move.pieceIdx == pieceId) {
+        availableMoves.push(move.targetPos);
+      }
+    }
+
+    return availableMoves.length > 0 ? availableMoves : null;
+  }
+
   /**
    * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */

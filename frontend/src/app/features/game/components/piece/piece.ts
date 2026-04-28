@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CdkDrag, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragEnd, CdkDragStart } from '@angular/cdk/drag-drop';
 
 import { ChessPiece } from '../../services/pieces/ChessPiece';
 import { newPosition, Position, positionsEqual } from '../../services/pieces/Position';
@@ -16,8 +16,14 @@ export class Piece {
 
   @Output()
   moved = new EventEmitter<Position>();
+  pieceSelected = new EventEmitter<boolean>();
 
   dragPosition = { x: 0, y: 0 };
+
+  onDragStart(_event: CdkDragStart) {
+    console.log('started drag');
+    this.pieceSelected.emit(true);
+  }
 
   onDragEnded(event: CdkDragEnd) {
     const boardSize = this.boardRef.getBoundingClientRect();
