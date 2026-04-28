@@ -18,6 +18,13 @@ type Game struct {
 	Side          string         `gorm:"size:1; not null"`
 	NextMoves     datatypes.JSON `gorm:"type:json"`
 	PrevMoves     datatypes.JSON `gorm:"type:json"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+
+	// Per-side chess clock; only the active side's time ticks down
+	TimeControlSeconds int       `json:"time_control_seconds"`
+	WhiteRemainingMs   int64     `json:"white_remaining_ms"`
+	BlackRemainingMs   int64     `json:"black_remaining_ms"`
+	LastMoveAt         time.Time `json:"last_move_at"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

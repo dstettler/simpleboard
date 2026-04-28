@@ -16,6 +16,13 @@ type Game struct {
 	Side          string
 	NextMoves     []string
 	PrevMoves     []string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+
+	// Per-side chess clock; only the active side's time ticks down
+	TimeControlSeconds int
+	WhiteRemainingMs   int64
+	BlackRemainingMs   int64
+	LastMoveAt         time.Time
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

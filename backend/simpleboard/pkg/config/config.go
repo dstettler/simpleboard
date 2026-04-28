@@ -13,6 +13,10 @@ type Config struct {
 	DBPath        string
 	CORSOrigins   []string
 	JWTSecret     string
+
+	// Timer config (issue #85)
+	DefaultTimeControlSeconds int
+	SweepIntervalSeconds      int
 }
 
 // Loads the config by getting env defined variables
@@ -25,6 +29,10 @@ func Load() *Config {
 		DBPath:        getEnv("DB_PATH", "./simpleboard.db"),
 		CORSOrigins:   getEnvList("CORS_ORIGINS", []string{"http://localhost:4200"}),
 		JWTSecret:     getEnv("JWT_SECRET", "no-secret"),
+
+		// Default 10 min/side; sweeper runs every 30s
+		DefaultTimeControlSeconds: getEnvInt("DEFAULT_TIME_CONTROL_SECONDS", 600),
+		SweepIntervalSeconds:      getEnvInt("SWEEP_INTERVAL_SECONDS", 30),
 	}
 }
 
