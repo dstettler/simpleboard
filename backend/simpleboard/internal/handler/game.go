@@ -12,6 +12,7 @@ import (
 	"simpleboard/pkg/db"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
 )
 
@@ -19,7 +20,7 @@ import (
 func Game(c *gin.Context) {
 	var input struct {
 		Action             string `json:"action"`
-		GameID             int    `json:"game_id"`
+		GameID             string `json:"game_id"`
 		PlayerID           uint   `json:"player_id"`
 		GuestID            string `json:"guest_id"`
 		OtherID            uint   `json:"other_id"`
@@ -49,6 +50,13 @@ func Game(c *gin.Context) {
 		var wgid string = ""
 		var bgid string = ""
 
+		// determine if a queue entry is to be made
+		// -- a queue entry is made when the other
+		// id (user or guest) is not specified at
+		// game creation time.
+		ephem := false
+		newStatusStr := chess.NotStarted.String()
+
 		// determine starting color for the "creating" player
 		if input.PlayerID != 0 {
 			if input.StartingSide == "w" {
@@ -62,6 +70,7 @@ func Game(c *gin.Context) {
 				return
 			}
 		} else if input.GuestID != "" {
+			ephem = true
 			if input.StartingSide == "w" {
 				wgid = input.GuestID
 			} else if input.StartingSide == "b" {
@@ -73,6 +82,28 @@ func Game(c *gin.Context) {
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user or guest id not specified"})
 			return
+		}
+
+		enqueue := false
+		queueEntry := repository.Queue{}
+
+		// check player registrations
+		if (!ephem && wpid != 0 && bpid != 0) {
+			// this is a started game in the sense that both players have attributed user ids;
+			// no queue
+			newStatusStr = chess.InProgress.String()
+		} else {
+			// started game with only one attributed user; queue
+			enqueue = true
+			queueEntry = repository.Queue{
+				GameID: uuid.Nil, /* default for now, nil */
+				WhitePlayerID: wpid,
+				BlackPlayerID: bpid,
+				WhiteGuestID:  wgid,
+				BlackGuestID:  bgid,
+				Active: true,
+				Open: false, /* default for now, no matchmaking ability */
+			}
 		}
 
 		game := chess.ReadChessGame(chess.StartFEN, nil, nil)
@@ -101,7 +132,7 @@ func Game(c *gin.Context) {
 			WhiteGuestID:  wgid,
 			BlackGuestID:  bgid,
 			State:         game.FEN(),
-			Status:        chess.InProgress.String(),
+			Status:        newStatusStr,
 			Side:          game.Side,
 			NextMoves:     nextMovesJSON,
 			PrevMoves:     prevMovesJSON,
@@ -116,11 +147,124 @@ func Game(c *gin.Context) {
 			return
 		}
 
+		// if enqueueing, populate the actual game id and create entry
+		if (enqueue) {
+			queueEntry.GameID = entry.ID // set game id
+			if err := db.DB.Create(&queueEntry).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
 		// game successfully added
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "game created",
 			"state":   gameStatePayload(&entry, entry.WhiteRemainingMs, entry.BlackRemainingMs),
 		})
+	} else if action == "join" {
+		// get claims to validate
+		claims := auth.GetClaims(c)
+		if claims == nil || (claims.UserID == nil && claims.GuestID == nil) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "auth required"})
+			return
+		}
+
+		// get game
+		var entry repository.Game
+		if err := db.DB.Where("id = ?", input.GameID).First(&entry).Error; err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid game id"})
+			return
+		}
+
+		// check that the game isn't ongoing or unjoinable --
+		// this is done by checking the 'active' status of the queue entry
+		var queueEntry repository.Queue
+
+		// parse string for uuid
+		parsedGameUUID, err := uuid.Parse(input.GameID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := db.DB.Where("game_id = ?", input.GameID).First(&queueEntry).Error; err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "game not joinable"})
+			return
+		}
+		if entry.Status != chess.NotStarted.String() || queueEntry.Active != true {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "game not joinable"})
+			return
+		}
+
+		var wpid uint = entry.WhitePlayerID
+		var bpid uint = entry.BlackPlayerID
+		var wgid string = entry.WhiteGuestID
+		var bgid string = entry.BlackGuestID
+
+		if claims.UserID != nil {
+			if queueEntry.WhitePlayerID == 0 && queueEntry.WhiteGuestID == "" {
+				wpid = uint(*claims.UserID)
+			} else {
+				bpid = uint(*claims.UserID)
+			}
+
+		} else if claims.GuestID != nil {
+			if queueEntry.WhitePlayerID == 0 && queueEntry.WhiteGuestID == "" {
+				wgid = claims.GuestID.String()
+			} else {
+				bgid = claims.GuestID.String()
+			}
+		}
+
+		// update queue entry
+		updatedQueueEntry := repository.Queue{
+			ID:            queueEntry.ID,
+			GameID:        parsedGameUUID,
+			WhitePlayerID: wpid,
+			BlackPlayerID: bpid,
+			WhiteGuestID:  wgid,
+			BlackGuestID:  bgid,
+			Active: false,
+			Open: false,
+		}
+
+		db.DB.Save(&updatedQueueEntry)
+
+		// update player / guest ids, status
+		updatedEntry := repository.Game{
+			ID:            parsedGameUUID,
+			WhitePlayerID: updatedQueueEntry.WhitePlayerID,
+			BlackPlayerID: updatedQueueEntry.BlackPlayerID,
+			WhiteGuestID:  updatedQueueEntry.WhiteGuestID,
+			BlackGuestID:  updatedQueueEntry.BlackGuestID,
+			State:         entry.State,
+			Status:        chess.InProgress.String(),
+			Side:          entry.Side,
+			NextMoves:     entry.NextMoves,
+			PrevMoves:     entry.PrevMoves,
+		}
+
+		db.DB.Save(&updatedEntry)
+
+		// game successfully added
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "game joined",
+			"state": gin.H{
+				"game_id":         updatedEntry.ID,
+				"white_player_id": updatedEntry.WhitePlayerID,
+				"black_player_id": updatedEntry.BlackPlayerID,
+				"white_guest_id":  updatedEntry.WhiteGuestID,
+				"black_guest_id":  updatedEntry.BlackGuestID,
+				"state":           updatedEntry.State,
+				"status":          updatedEntry.Status,
+				"side":            updatedEntry.Side,
+				"next_moves":      updatedEntry.NextMoves,
+				"prev_moves":      updatedEntry.PrevMoves,
+				"created_at":      updatedEntry.CreatedAt,
+				"updated_at":      updatedEntry.UpdatedAt,
+			},
+		})
+
 	} else if action == "state" {
 
 		// get claims to validate
@@ -197,6 +341,16 @@ func Game(c *gin.Context) {
 		color, success := colorFromID(&entry, claims)
 		if !success {
 			c.JSON(http.StatusForbidden, gin.H{"error": "invalid player / guest id for move"})
+			return
+		}
+
+		// check that 2 players have been registered to play the game
+		if entry.WhitePlayerID == 0 && entry.WhiteGuestID == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "no white player / guest"})
+			return
+		}
+		if entry.BlackPlayerID == 0 && entry.BlackGuestID == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "no black player / guest"})
 			return
 		}
 
@@ -300,11 +454,23 @@ func colorFromID(game *repository.Game, claims *auth.Claims) (string, bool) {
 
 	// guests
 	if claims.GuestID != nil {
-		if game.WhiteGuestID != "" && game.WhiteGuestID == *claims.GuestID {
-			return "w", true
+		if game.WhiteGuestID != "" {
+			parsedWGUUID, err := uuid.Parse(game.WhiteGuestID)
+			if err != nil {
+				return "", false
+			}
+			if parsedWGUUID == *claims.GuestID {
+				return "w", true
+			}
 		}
-		if game.BlackGuestID != "" && game.BlackGuestID == *claims.GuestID {
-			return "b", true
+		if game.BlackGuestID != "" {
+			parsedBGUUID, err := uuid.Parse(game.BlackGuestID)
+			if err != nil {
+				return "", false
+			}
+			if parsedBGUUID == *claims.GuestID {
+				return "b", true
+			}
 		}
 	}
 

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"simpleboard/pkg/config"
 	"time"
 )
@@ -9,7 +10,7 @@ import (
 // claims type
 type Claims struct {
 	UserID  *uint   `json:"user_id,omitempty"`
-	GuestID *string `json:"guest_id,omitempty"`
+	GuestID *uuid.UUID `json:"guest_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -33,7 +34,7 @@ func NewUserToken(id uint, td time.Duration) (string, error) {
 }
 
 // generates a new user (guest)
-func NewGuestToken(id string, td time.Duration) (string, error) {
+func NewGuestToken(id uuid.UUID, td time.Duration) (string, error) {
 	claims := &Claims{
 		GuestID: &id,
 		RegisteredClaims: jwt.RegisteredClaims{
