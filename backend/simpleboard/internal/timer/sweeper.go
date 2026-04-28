@@ -31,7 +31,6 @@ func StartSweeper(db *gorm.DB, interval time.Duration) {
 }
 
 // sweepOnce does a single pass over in-progress games and ends timed-out ones.
-// Pulled out so it's easy to invoke directly from a test.
 func sweepOnce(db *gorm.DB, now time.Time) {
 	var games []repository.Game
 	if err := db.Where("status = ?", chess.InProgress.String()).Find(&games).Error; err != nil {
@@ -41,22 +40,30 @@ func sweepOnce(db *gorm.DB, now time.Time) {
 
 	for i := range games {
 		g := &games[i]
-		_, _, timedOut, loser := LiveRemaining(g, now)
-		if !timedOut {
+		if !markIfTimedOut(g, now) {
 			continue
 		}
-
-		g.Status = FlagFallStatus(loser).String()
-		if loser == "w" {
-			g.WhiteRemainingMs = 0
-		} else {
-			g.BlackRemainingMs = 0
-		}
-
 		if err := db.Save(g).Error; err != nil {
 			log.Printf("timer sweeper: save game %d failed: %v", g.ID, err)
 			continue
 		}
-		log.Printf("timer sweeper: game %d ended on time (%s flagged)", g.ID, loser)
+		log.Printf("timer sweeper: game %d ended on time", g.ID)
 	}
+}
+
+// markIfTimedOut applies the flag-fall result to a single game in place.
+// Returns true if the game was modified (and therefore needs to be persisted).
+// Pure function -- no DB needed -- so it's straightforward to test.
+func markIfTimedOut(g *repository.Game, now time.Time) bool {
+	_, _, timedOut, loser := LiveRemaining(g, now)
+	if !timedOut {
+		return false
+	}
+	g.Status = FlagFallStatus(loser).String()
+	if loser == "w" {
+		g.WhiteRemainingMs = 0
+	} else {
+		g.BlackRemainingMs = 0
+	}
+	return true
 }
