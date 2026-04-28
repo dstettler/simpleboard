@@ -14,15 +14,13 @@ export class Piece {
   @Input() piece!: ChessPiece;
   @Input() boardRef!: HTMLElement;
 
-  @Output()
-  moved = new EventEmitter<Position>();
-  pieceSelected = new EventEmitter<boolean>();
+  @Output() moved = new EventEmitter<Position>();
+  @Output() pieceSelected = new EventEmitter<void>();
 
   dragPosition = { x: 0, y: 0 };
 
   onDragStart(_event: CdkDragStart) {
-    console.log('started drag');
-    this.pieceSelected.emit(true);
+    this.pieceSelected.emit();
   }
 
   onDragEnded(event: CdkDragEnd) {

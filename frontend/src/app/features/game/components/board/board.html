@@ -7,7 +7,7 @@
             <div class="board-square" [class.dark]="isDarkSquare($index)">
               @if (targetableObservable$ | async; as targetables) {
                 @if (isTargetable($index, targetables)) {
-                  <span class="targetable"></span>
+                  <span class="targetable">&bullet;</span>
                 }
               }
             </div>

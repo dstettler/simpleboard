@@ -40,9 +40,7 @@ export class Board {
   }
 
   onPieceSelected(piece: ChessPiece) {
-    console.log('piece selected');
     const targetables = this.stateService.getTargetables(piece.id);
-    console.log(`new targetables: ${targetables}`);
     this.targetable.update(_t => targetables);
   }
 
