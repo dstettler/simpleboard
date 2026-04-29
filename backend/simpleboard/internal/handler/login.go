@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	//"simpleboard/internal/domain"
 	"simpleboard/internal/auth"
 	"simpleboard/internal/repository"
 	"simpleboard/pkg/db"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	//"simpleboard/pkg/response"
 )
 
 // Logs a user in with username and password
@@ -21,41 +19,67 @@ func Login(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
-	// bad request; could not bind context into input struct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// get user
 	var user repository.User
 	if err := db.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
-	// compare password hash
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
-	// serve new login token
+	// update daily streak on each new-day login
+	updateStreak(&user)
+
 	token, err := auth.NewUserToken(user.UserID, 24*time.Hour)
 	if err != nil {
-		fmt.Print(err.Error())
+		log.Printf("token creation failed for user %d: %v", user.UserID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
 		return
 	}
 
-	// user successfully logged in
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
 		"token":   token,
 		"user": gin.H{
-			"user_id":  user.UserID,
-			"username": user.Username,
-			"email":    user.Email,
+			"user_id":        user.UserID,
+			"username":       user.Username,
+			"email":          user.Email,
+			"current_streak": user.CurrentStreak,
+			"longest_streak": user.LongestStreak,
 		},
 	})
+}
+
+// updateStreak increments the user's daily streak if this is their first login today.
+// A new calendar day (midnight UTC) resets or extends the streak.
+func updateStreak(user *repository.User) {
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	last := user.LastLoginDate.UTC().Truncate(24 * time.Hour)
+
+	// already logged in today — nothing to do
+	if last.Equal(today) {
+		return
+	}
+
+	yesterday := today.Add(-24 * time.Hour)
+	if last.Equal(yesterday) {
+		user.CurrentStreak++ // kept the streak alive
+	} else {
+		user.CurrentStreak = 1 // gap or first ever login
+	}
+
+	if user.CurrentStreak > user.LongestStreak {
+		user.LongestStreak = user.CurrentStreak
+	}
+	user.LastLoginDate = today
+
+	db.DB.Save(user)
 }
