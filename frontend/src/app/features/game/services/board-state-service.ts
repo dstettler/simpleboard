@@ -98,7 +98,10 @@ export class BoardStateService {
     switchMap(() => {
       if (this.playerId() != -1 && this.gameId() != '') {
         this._timerRemainingMs.update(prevTime => prevTime - 1000);
-        console.log(`tick ${this.timerRemainingMs()}`);
+
+        if (this.timerRemainingMs() < 0) {
+          return this.boardLoad(this.gameId(), this.playerId())
+        }
       }
 
       return EMPTY;
@@ -202,12 +205,15 @@ export class BoardStateService {
           }
 
           this._gameStatus.update(_p => parseGameStatus(resp.state.status));
-          if (this.isOwnMove()) {
+          if (this.isOwnMove() && resp.state.status == 'InProgress') {
             this._gameTimerRunning.update(_ => true);
             this._pollBackend.update(_ => false);
-          } else {
+          } else if (resp.state.status == 'InProgress') {
             this._gameTimerRunning.update(_ => false);
             this._pollBackend.update(_ => true);
+          } else {
+            this._gameTimerRunning.update(_ => false);
+            this._pollBackend.update(_ => false);
           }
 
           return;
