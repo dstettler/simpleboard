@@ -8,11 +8,11 @@ import (
 
 // Config type
 type Config struct {
-	Port          int
-	ServerAddress string
-	DBPath        string
-	CORSOrigins   []string
-	JWTSecret     string
+	Port                      int
+	ServerAddress             string
+	DBPath                    string
+	CORSOrigins               []string
+	JWTSecret                 string
 	DefaultTimeControlSeconds int
 	SweepIntervalSeconds      int
 }
@@ -22,11 +22,11 @@ func Load() *Config {
 	port := getEnvInt("PORT", 8080)
 
 	return &Config{
-		Port:          port,
-		ServerAddress: ":" + strconv.Itoa(port),
-		DBPath:        getEnv("DB_PATH", "./simpleboard.db"),
-		CORSOrigins:   getEnvList("CORS_ORIGINS", []string{"http://localhost:4200"}),
-		JWTSecret:     getEnv("JWT_SECRET", "no-secret"),
+		Port:                      port,
+		ServerAddress:             ":" + strconv.Itoa(port),
+		DBPath:                    getEnv("DB_PATH", "./simpleboard.db"),
+		CORSOrigins:               getEnvList("CORS_ORIGINS", []string{"http://localhost:4200"}),
+		JWTSecret:                 getEnv("JWT_SECRET", "no-secret"),
 		DefaultTimeControlSeconds: getEnvInt("DEFAULT_TIME_CONTROL_SECONDS", 600),
 		SweepIntervalSeconds:      getEnvInt("SWEEP_INTERVAL_SECONDS", 30),
 	}

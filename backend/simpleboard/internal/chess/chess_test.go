@@ -388,27 +388,27 @@ func TestReadChessGameTable(t *testing.T) {
 		status   Status
 	}{
 		{
-			name:     "start position",
-			fen:      StartFEN,
-			side:     "w", castle: "KQkq", epts: "-",
+			name: "start position",
+			fen:  StartFEN,
+			side: "w", castle: "KQkq", epts: "-",
 			halfmove: 0, fullmove: 1, status: NotStarted,
 		},
 		{
-			name:     "after 1.e4",
-			fen:      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
-			side:     "b", castle: "KQkq", epts: "e3",
+			name: "after 1.e4",
+			fen:  "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+			side: "b", castle: "KQkq", epts: "e3",
 			halfmove: 0, fullmove: 1, status: InProgress,
 		},
 		{
-			name:     "king and pawn endgame",
-			fen:      "8/5k2/8/5P2/5K2/8/8/8 w - - 3 45",
-			side:     "w", castle: "-", epts: "-",
+			name: "king and pawn endgame",
+			fen:  "8/5k2/8/5P2/5K2/8/8/8 w - - 3 45",
+			side: "w", castle: "-", epts: "-",
 			halfmove: 3, fullmove: 45, status: InProgress,
 		},
 		{
-			name:     "white kingside castling only",
-			fen:      "r3kb1r/pppq1ppp/5n2/3p4/3P4/5N2/PPP2PPP/R1BQ1RK1 b Kkq - 0 9",
-			side:     "b", castle: "Kkq", epts: "-",
+			name: "white kingside castling only",
+			fen:  "r3kb1r/pppq1ppp/5n2/3p4/3P4/5N2/PPP2PPP/R1BQ1RK1 b Kkq - 0 9",
+			side: "b", castle: "Kkq", epts: "-",
 			halfmove: 0, fullmove: 9, status: InProgress,
 		},
 	}

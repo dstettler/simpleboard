@@ -30,6 +30,7 @@ func Connect(cfg *config.Config) {
 	err = db.AutoMigrate(
 		&repository.Game{},
 		&repository.User{},
+		&repository.Queue{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database '%s': %v", db_path, err)

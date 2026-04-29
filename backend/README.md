@@ -5,27 +5,29 @@ Go backend server for the Simpleboard chess application.
 ## Directory Structure
 
 ```
-backend/
+backend/simpleboard/
 ├── api/                    # HTTP router and route definitions
 ├── cmd/
 │   └── simpleboard/        # Application entry point (main.go)
 ├── internal/               # Private application packages
+|   ├── auth/               # Authentication
 │   ├── chess/              # Chess rule logic and FEN handling
 │   ├── domain/             # Domain type definitions
 │   ├── handler/            # HTTP request handlers
-│   ├── auth/               # Authentication
 │   ├── repository/         # GORM model structs
-│   └── service/            # Business logic services
+|   ├── timer/              # Game timer functionality
+|   └── utils/              # Backend utils functions
 ├── pkg/                    # Shared utility packages
 │   ├── config/             # Runtime configuration loader
 │   ├── db/                 # Database connection wrapper
 │   └── response/           # JSON response and error helpers
-└── simpleboard.db          # Database instance
+└── simpleboard.db          # Database instance (example path)
 ```
 
 ## Getting Started
 
 ```bash
+cd simpleboard
 go build ./cmd/simpleboard
 ./simpleboard.exe
 ```
@@ -33,6 +35,12 @@ go build ./cmd/simpleboard
 The server starts on port **8080** by default.
 
 ## Environment Variables
+Environment variables for the backend can be easily defined in an `env.sh` using the template:
+``` bash
+cp env.sh.template env.sh
+nano env.sh # edit values as needed
+source ./env.sh
+```
 
 | Variable                       | Default                  | Description                              |
 |--------------------------------|--------------------------|------------------------------------------|
@@ -48,6 +56,7 @@ The server starts on port **8080** by default.
 | Method | Path           | Description          |
 |--------|----------------|----------------------|
 | GET    | `/api/health`  | Health check         |
+| GET    | `/api/guest`   | Generate a guest id  |
 | POST   | `/api/register`| Register account     |
 | POST   | `/api/login`   | Login to account     |
 | POST   | `/api/game`    | Game interaction     |
@@ -55,10 +64,25 @@ The server starts on port **8080** by default.
 ## Usage
 
 ### GET `/api/health` -> `200`
-
+#### Response
 ```
 {
   "status": "ok"
+}
+```
+
+### GET `/api/guest` -> `200`
+`/api/guest` will serve a new guest token if the request is made with no `Authorization` header.
+- Used to generate a `guest_id` and required auth token for creating / joining ephemeral game sessions
+
+#### Response
+```
+{
+    "message":"guest creation successful",
+    "token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWVzdF9pZCI6ImViOGIzMWQ1LTMyY2QtNGQ0NS05NTZkLTBkZGU1MzNlM2M0ZCIsImV4cCI6MTc3NzQzNjQxOSwiaWF0IjoxNzc3MzUwMDE5fQ.8VUlb9c0Jsfgh0fFlA3Tymz3ZVVf45rwSJwwTyZM_6k",
+    "user":{
+        "guest_id":"eb8b31d5-32cd-4d45-956d-0dde533e3c4d"
+    }
 }
 ```
 
@@ -109,8 +133,9 @@ The server starts on port **8080** by default.
 ```
 
 ### POST `/api/game` -> `200`
-`/api/game` has 3 `"action"` field values that direct it's interaction with the game state:
+`/api/game` has 4 `"action"` field values that direct it's interaction with the game state:
 - `"create"` - Creates new game
+- `"join"` - Joins a game in queue (can be done via an invite link)
 - `"state"` - Replies with the current game state
 - `"move"` - Apply a user move to the game and get the result
 
@@ -118,16 +143,16 @@ All requests must have a valid `Authorization` header of the form:
 ```
 ... "Authorization: Bearer <YOUR_JWT_TOKEN_HERE>" ...
 ```
-The JWT token is given upon a successful login, and expires in 24 hours.
+The JWT token is given upon a successful login or guest user creation, and expires in 24 hours.
 
 #### Example Body
 ```
 {
   "action": "create",
   "player_id": 1,
-  "other_id": 2,
-  "starting_side": "w",
-  "time_control_seconds": 600
+  "other_id": 2, // optional - only for games w/ 2 known users to start
+  "starting_side": "w"
+  "time_control_seconds": 700
 }
 ```
 `time_control_seconds` is **optional**. Omit (or send `0`) to use the server default (`DEFAULT_TIME_CONTROL_SECONDS`, 10 min). Both sides get the same starting clock.
@@ -137,20 +162,162 @@ The JWT token is given upon a successful login, and expires in 24 hours.
 {
     "message":"game created",
         "state": {
+            "black_guest_id":"",
             "black_player_id":2,
             "created_at":"2026-03-26T01:27:40.740472882-04:00",
-            "game_id":1,
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+            "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
+            "prev_moves":[],
+            "side":"w",
+            "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "status":"InProgress",
+            "time_control_seconds": 700,
+            "white_remaining_ms": 694120,
+            "black_remaining_ms": 700000,
+            "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
+            "server_time": "2026-03-26T01:27:40.740472882-04:00",
+            "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":"",
+            "white_player_id":1
+        }
+}
+```
+
+#### Example Body
+```
+{
+  "action": "create",
+  "guest_id": "eb8b31d5-32cd-4d45-956d-0dde533e3c4d",
+  "starting_side": "w"
+}
+```
+
+#### Response
+```
+{
+    "message":"game created",
+        "state": {
+            "black_guest_id":"",
+            "black_player_id":0,
+            "created_at":"2026-03-26T01:27:40.740472882-04:00",
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+            "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
+            "prev_moves":[],
+            "side":"w",
+            "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "status":"NotStarted",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 600000,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
+            "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":"eb8b31d5-32cd-4d45-956d-0dde533e3c4d"
+            "white_player_id":0
+        }
+}
+```
+
+#### Example Body
+```
+{
+  "action": "create",
+  "player_id": 1,
+  "starting_side": "w"
+}
+```
+
+#### Response
+```
+{
+    "message":"game created",
+        "state": {
+            "black_guest_id":"",
+            "black_player_id":0,
+            "created_at":"2026-03-26T01:27:40.740472882-04:00",
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+            "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
+            "prev_moves":[],
+            "side":"w",
+            "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "status":"NotStarted",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 600000,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
+            "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":""
+            "white_player_id":1
+        }
+}
+```
+
+#### Example Body
+```
+{
+  "action": "join",
+  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0", // game with existing white player
+  "guest_id": "eb8b31d5-32cd-4d45-956d-0dde533e3c4d",
+}
+```
+
+#### Response
+```
+{
+    "message":"game joined",
+        "state": {
+            "black_guest_id":"eb8b31d5-32cd-4d45-956d-0dde533e3c4d",
+            "black_player_id":0,
+            "created_at":"2026-03-26T01:27:40.740472882-04:00",
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
             "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
             "prev_moves":[],
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
             "time_control_seconds": 600,
-            "white_remaining_ms": 600000,
+            "white_remaining_ms": 594120,
             "black_remaining_ms": 600000,
-            "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
-            "server_time": "2026-03-26T01:27:40.740472882-04:00",
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":"",
+            "white_player_id":1
+        }
+}
+```
+
+#### Example Body
+```
+{
+  "action": "join",
+  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0", // game with existing white player
+  "player_id": 2,
+}
+```
+
+#### Response
+```
+{
+    "message":"game joined",
+        "state": {
+            "black_guest_id":"",
+            "black_player_id":2,
+            "created_at":"2026-03-26T01:27:40.740472882-04:00",
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+            "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
+            "prev_moves":[],
+            "side":"w",
+            "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 594120,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
+            "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":"",
             "white_player_id":1
         }
 }
@@ -160,7 +327,7 @@ The JWT token is given upon a successful login, and expires in 24 hours.
 ```
 {
   "action": "state",
-  "game_id": 1,
+  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
   "player_id": 1
 }
 ```
@@ -170,9 +337,10 @@ The JWT token is given upon a successful login, and expires in 24 hours.
 {
     "message":"state",
         "state": {
+            "black_guest_id":"",
             "black_player_id":2,
             "created_at":"2026-03-26T01:27:40.740472882-04:00",
-            "game_id":1,
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
             "next_moves":["a2a3","a2a4","b2b3","b2b4","c2c3","c2c4","d2d3","d2d4","e2e3","e2e4","f2f3","f2f4","g2g3","g2g4","h2h3","h2h4","b1c3","b1a3","g1h3","g1f3"],
             "prev_moves":[],
             "side":"w",
@@ -184,6 +352,7 @@ The JWT token is given upon a successful login, and expires in 24 hours.
             "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
             "server_time": "2026-03-26T01:27:43.973102000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
+            "white_guest_id":"",
             "white_player_id":1
         }
 }
@@ -195,7 +364,7 @@ The remaining-ms values returned for `state` are **live**: the active side's clo
 {
   "action": "move",
   "player_id": 1,
-  "game_id": 1,
+  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
   "move":"a2a3"
 }
 ```
@@ -205,9 +374,10 @@ The remaining-ms values returned for `state` are **live**: the active side's clo
 {
     "message":"move applied",
         "state": {
+            "black_guest_id":"",
             "black_player_id":2,
             "created_at":"2026-03-26T01:27:40.740472882-04:00",
-            "game_id":1,
+            "game_id":"f0e510f2-0d72-4ce2-ab38-025e224c55c0",
             "next_moves":["b8c6","b8a6","g8h6","g8f6","a7a6","a7a5","b7b6","b7b5","c7c6","c7c5","d7d6","d7d5","e7e6","e7e5","f7f6","f7f5","g7g6","g7g5","h7h6","h7h5"],
             "prev_moves":["a2a3"],
             "side":"b",
@@ -219,13 +389,14 @@ The remaining-ms values returned for `state` are **live**: the active side's clo
             "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
             "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:33:52.383454683-04:00",
+            "white_guest_id":"",
             "white_player_id":1
         }
 }
 ```
 On a successful move, the responding side has switched (`side` is now the opponent), the moving player's elapsed time has been deducted from their clock, and `last_move_at` jumps to the move time. If the moving player's clock had already run out, the response instead has `"message":"flag fall"` and `status` is set to `WinWhite` or `WinBlack` -- the move is **not** applied in that case.
 
-## Game Timer (frontend integration)
+## Game Timer Functionality
 
 Every game now carries a per-side chess clock. The server is the source of truth -- it decides when a player has run out of time, so clients can never cheat by stalling. This section is everything the frontend needs to render and use it.
 
