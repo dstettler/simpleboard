@@ -29,12 +29,12 @@ export class Board {
 
   ngOnInit() {
     const userId = Number(this.authService.userId());
-    this.stateService.boardLoad(Number(this.gameId), userId).subscribe();
+    this.stateService.boardLoad(this.gameId, userId).subscribe();
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
     const userId = Number(this.authService.userId());
-    this.stateService.updatePiecePosition(Number(this.gameId), userId, piece, target).subscribe();
+    this.stateService.updatePiecePosition(this.gameId, userId, piece, target).subscribe();
   }
 
   isDarkSquare(i: number): boolean {

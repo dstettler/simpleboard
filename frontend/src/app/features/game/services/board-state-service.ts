@@ -11,7 +11,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 type GameRequest = {
   action: string;
-  game_id: number;
+  game_id: string;
   player_id: number;
   move: string;
 }
@@ -60,7 +60,7 @@ export class BoardStateService {
   private _nextMoves = signal<Move[]>([]);
   private _gameStatus = signal<GameStatus>("Waiting");
   private _playerId = signal<number>(-1);
-  private _gameId = signal<number>(-1);
+  private _gameId = signal<string>('');
   private _timerRemainingMs = signal<number>(-1);
   private _pollBackend = signal<boolean>(false);
   private _gameTimerRunning = signal<boolean>(false);
@@ -83,7 +83,7 @@ export class BoardStateService {
   private poll$ = toObservable(this.pollBackend).pipe(
     switchMap(p => p ? timer(0, BACKEND_PING_RATE_MS) : EMPTY),
     switchMap(() => {
-      if (this.playerId() != -1 && this.gameId() != -1) {
+      if (this.playerId() != -1 && this.gameId() != '') {
         return this.boardLoad(this.gameId(), this.playerId())
       } else {
         return EMPTY;
@@ -96,7 +96,7 @@ export class BoardStateService {
     // If timer is runing (p), wait one second, update GUI signal
     switchMap(p => p ? timer(0, 1000) : EMPTY),
     switchMap(() => {
-      if (this.playerId() != -1 && this.gameId() != -1) {
+      if (this.playerId() != -1 && this.gameId() != '') {
         this._timerRemainingMs.update(prevTime => prevTime - 1000);
         console.log(`tick ${this.timerRemainingMs()}`);
       }
@@ -114,7 +114,7 @@ export class BoardStateService {
   /**
    * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */
-  boardLoad(gameId: number, playerId: number): Observable<void> {
+  boardLoad(gameId: string, playerId: number): Observable<void> {
     // Load initial state
     const req: GameRequest = {
       action:"state",
@@ -217,7 +217,7 @@ export class BoardStateService {
     );
   }
 
-  updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
+  updatePiecePosition(gameId: string, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
     let captureChar = '';
     for (const piece of this._pieces()) {
       if (positionsEqual(piece.position, newPos))
