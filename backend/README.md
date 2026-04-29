@@ -107,7 +107,7 @@ source ./env.sh
             "user_id":  0,
             "username": "example",
             "email":    "example@example.com"
-            }
+        }
 }
 ```
 
@@ -122,15 +122,18 @@ source ./env.sh
 ```
 
 #### Response
+
 ```
 {
     "message": "login successful",
-        "token": "new-jwt-token",
+        "token": <new-jwt-token>,
         "user": {
-            "user_id":  1,
+            "user_id": 1,
             "username": "example",
-            "email":    "example@example.com"
-            }
+            "email": "example@example.com",
+            "current_streak": 4,
+            "longest_streak": 12
+        }
 }
 ```
 
@@ -293,9 +296,9 @@ The JWT token is given upon a successful login or guest user creation, and expir
 #### Example Body
 ```
 {
-  "action": "join",
-  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0", // game with existing white player
-  "player_id": 2,
+    "action": "join",
+    "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0", // game with existing white player
+    "player_id": 2,
 }
 ```
 
@@ -328,9 +331,9 @@ The JWT token is given upon a successful login or guest user creation, and expir
 #### Example Body
 ```
 {
-  "action": "state",
-  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
-  "player_id": 1
+    "action": "state",
+    "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+    "player_id": 1
 }
 ```
 
@@ -364,10 +367,10 @@ The remaining-ms values returned for `state` are **live**: the active side's clo
 #### Example Body
 ```
 {
-  "action": "move",
-  "player_id": 1,
-  "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
-  "move":"a2a3"
+    "action": "move",
+    "player_id": 1,
+    "game_id": "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+    "move":"a2a3"
 }
 ```
 
@@ -473,21 +476,21 @@ These three endpoints back the dashboard and streak features. All require a regi
 
 ---
 
-### Updated: POST `/api/login` response
+### POST `/api/login` response
 
-The login response now includes streak fields so the UI can show the streak immediately after sign-in without a second request.
+The login response includes streak fields so the UI can show the streak immediately after sign-in without a second request.
 
-```json
+```
 {
-  "message": "login successful",
-  "token": "<jwt>",
-  "user": {
-    "user_id": 1,
-    "username": "alice",
-    "email": "alice@example.com",
-    "current_streak": 4,
-    "longest_streak": 12
-  }
+    "message": "login successful",
+        "token": <new-jwt-token>,
+        "user": {
+            "user_id": 1,
+            "username": "example",
+            "email": "example@example.com",
+            "current_streak": 4,
+            "longest_streak": 12
+        }
 }
 ```
 
@@ -503,16 +506,16 @@ Authorization: Bearer <token>
 ```
 
 **Response**
-```json
+```
 {
-  "user_id":        1,
-  "username":       "alice",
-  "total_games":    38,
-  "wins":           20,
-  "losses":         14,
-  "win_rate":       0.526,
-  "current_streak": 4,
-  "longest_streak": 12
+    "user_id":        1,
+    "username":       "example",
+    "total_games":    38,
+    "wins":           20,
+    "losses":         14,
+    "win_rate":       0.526,
+    "current_streak": 4,
+    "longest_streak": 12
 }
 ```
 
@@ -539,25 +542,25 @@ Authorization: Bearer <token>
 ```
 
 **Response**
-```json
+```
 {
-  "user_id": 1,
-  "games": [
+    "user_id": 1,
+    "games": [
     {
-      "game_id":     "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
-      "status":      "WinWhite",
-      "played_as":   "w",
-      "opponent_id": 2,
-      "created_at":  "2026-04-28T14:00:00Z",
-      "updated_at":  "2026-04-28T14:22:00Z"
+        "game_id":     "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+        "status":      "WinWhite",
+        "played_as":   "w",
+        "opponent_id": 2,
+        "created_at":  "2026-04-28T14:00:00Z",
+        "updated_at":  "2026-04-28T14:22:00Z"
     },
     {
-      "game_id":     "a1b2c3d4-...",
-      "status":      "WinBlack",
-      "played_as":   "b",
-      "opponent_id": 0,
-      "created_at":  "2026-04-27T10:00:00Z",
-      "updated_at":  "2026-04-27T10:31:00Z"
+        "game_id":     "a1b2c3d4-...",
+        "status":      "WinBlack",
+        "played_as":   "b",
+        "opponent_id": 0,
+        "created_at":  "2026-04-27T10:00:00Z",
+        "updated_at":  "2026-04-27T10:31:00Z"
     }
   ]
 }

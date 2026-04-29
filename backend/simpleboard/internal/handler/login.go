@@ -19,24 +19,29 @@ func Login(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
+	// bad request; could not bind context into input struct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// get user
 	var user repository.User
 	if err := db.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
+	// compare password hash
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
+	// update the game streak number served in the response
 	updateStreak(&user)
 
+	// serve new login token
 	token, err := auth.NewUserToken(user.UserID, 24*time.Hour)
 	if err != nil {
 		log.Printf("token creation failed for user %d: %v", user.UserID, err)
@@ -44,6 +49,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// successfully logged in, serve token
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
 		"token":   token,
