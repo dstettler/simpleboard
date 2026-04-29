@@ -7,3 +7,4 @@ tmp/
 *.db
 env.sh
 backend/simpleboard
+!backend/simpleboard/

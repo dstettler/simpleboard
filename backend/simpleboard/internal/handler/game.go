@@ -88,7 +88,7 @@ func Game(c *gin.Context) {
 		queueEntry := repository.Queue{}
 
 		// check player registrations
-		if (!ephem && wpid != 0 && bpid != 0) {
+		if !ephem && wpid != 0 && bpid != 0 {
 			// this is a started game in the sense that both players have attributed user ids;
 			// no queue
 			newStatusStr = chess.InProgress.String()
@@ -96,13 +96,13 @@ func Game(c *gin.Context) {
 			// started game with only one attributed user; queue
 			enqueue = true
 			queueEntry = repository.Queue{
-				GameID: uuid.Nil, /* default for now, nil */
+				GameID:        uuid.Nil, /* default for now, nil */
 				WhitePlayerID: wpid,
 				BlackPlayerID: bpid,
 				WhiteGuestID:  wgid,
 				BlackGuestID:  bgid,
-				Active: true,
-				Open: false, /* default for now, no matchmaking ability */
+				Active:        true,
+				Open:          false, /* default for now, no matchmaking ability */
 			}
 		}
 
@@ -127,19 +127,23 @@ func Game(c *gin.Context) {
 		prevMovesJSON := datatypes.JSON(prevMovesData)
 
 		entry := repository.Game{
-			WhitePlayerID: wpid,
-			BlackPlayerID: bpid,
-			WhiteGuestID:  wgid,
-			BlackGuestID:  bgid,
-			State:         game.FEN(),
-			Status:        newStatusStr,
-			Side:          game.Side,
-			NextMoves:     nextMovesJSON,
-			PrevMoves:     prevMovesJSON,
+			WhitePlayerID:      wpid,
+			BlackPlayerID:      bpid,
+			WhiteGuestID:       wgid,
+			BlackGuestID:       bgid,
+			State:              game.FEN(),
+			Status:             newStatusStr,
+			Side:               game.Side,
+			NextMoves:          nextMovesJSON,
+			PrevMoves:          prevMovesJSON,
+			TimeControlSeconds: input.TimeControlSeconds,
 		}
 
 		// stamp initial clock state; white's time starts ticking from now
-		timer.InitGameTime(&entry, input.TimeControlSeconds, time.Now())
+		// if game has two active players
+		if newStatusStr != chess.NotStarted.String() {
+			timer.InitGameTime(&entry, entry.TimeControlSeconds, time.Now())
+		}
 
 		// create entry
 		if err := db.DB.Create(&entry).Error; err != nil {
@@ -148,7 +152,7 @@ func Game(c *gin.Context) {
 		}
 
 		// if enqueueing, populate the actual game id and create entry
-		if (enqueue) {
+		if enqueue {
 			queueEntry.GameID = entry.ID // set game id
 			if err := db.DB.Create(&queueEntry).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -224,45 +228,36 @@ func Game(c *gin.Context) {
 			BlackPlayerID: bpid,
 			WhiteGuestID:  wgid,
 			BlackGuestID:  bgid,
-			Active: false,
-			Open: false,
+			Active:        false,
+			Open:          false,
 		}
 
 		db.DB.Save(&updatedQueueEntry)
 
 		// update player / guest ids, status
 		updatedEntry := repository.Game{
-			ID:            parsedGameUUID,
-			WhitePlayerID: updatedQueueEntry.WhitePlayerID,
-			BlackPlayerID: updatedQueueEntry.BlackPlayerID,
-			WhiteGuestID:  updatedQueueEntry.WhiteGuestID,
-			BlackGuestID:  updatedQueueEntry.BlackGuestID,
-			State:         entry.State,
-			Status:        chess.InProgress.String(),
-			Side:          entry.Side,
-			NextMoves:     entry.NextMoves,
-			PrevMoves:     entry.PrevMoves,
+			ID:                 parsedGameUUID,
+			WhitePlayerID:      updatedQueueEntry.WhitePlayerID,
+			BlackPlayerID:      updatedQueueEntry.BlackPlayerID,
+			WhiteGuestID:       updatedQueueEntry.WhiteGuestID,
+			BlackGuestID:       updatedQueueEntry.BlackGuestID,
+			State:              entry.State,
+			Status:             chess.InProgress.String(),
+			Side:               entry.Side,
+			NextMoves:          entry.NextMoves,
+			PrevMoves:          entry.PrevMoves,
+			TimeControlSeconds: entry.TimeControlSeconds,
 		}
+
+		// start game timer with pre-defined time control
+		timer.InitGameTime(&updatedEntry, updatedEntry.TimeControlSeconds, time.Now())
 
 		db.DB.Save(&updatedEntry)
 
 		// game successfully added
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "game joined",
-			"state": gin.H{
-				"game_id":         updatedEntry.ID,
-				"white_player_id": updatedEntry.WhitePlayerID,
-				"black_player_id": updatedEntry.BlackPlayerID,
-				"white_guest_id":  updatedEntry.WhiteGuestID,
-				"black_guest_id":  updatedEntry.BlackGuestID,
-				"state":           updatedEntry.State,
-				"status":          updatedEntry.Status,
-				"side":            updatedEntry.Side,
-				"next_moves":      updatedEntry.NextMoves,
-				"prev_moves":      updatedEntry.PrevMoves,
-				"created_at":      updatedEntry.CreatedAt,
-				"updated_at":      updatedEntry.UpdatedAt,
-			},
+			"state":   gameStatePayload(&updatedEntry, entry.WhiteRemainingMs, entry.BlackRemainingMs),
 		})
 
 	} else if action == "state" {

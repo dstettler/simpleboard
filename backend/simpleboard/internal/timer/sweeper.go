@@ -47,7 +47,7 @@ func sweepOnce(db *gorm.DB, now time.Time) {
 			log.Printf("timer sweeper: save game %d failed: %v", g.ID, err)
 			continue
 		}
-		log.Printf("timer sweeper: game %d ended on time", g.ID)
+		log.Printf("timer sweeper: game %s ended on time", g.ID)
 	}
 }
 
