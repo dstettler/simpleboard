@@ -34,12 +34,14 @@ The server starts on port **8080** by default.
 
 ## Environment Variables
 
-| Variable       | Default                  | Description                    |
-|----------------|--------------------------|--------------------------------|
-| `PORT`         | `8080`                   | HTTP server port               |
-| `DB_PATH`      | `./simpleboard.db`       | SQLite database file path      |
-| `CORS_ORIGINS` | `http://localhost:4200`  | Comma-separated allowed origins|
-| `JWT_SECRET`   | `no-secret`              | JWT Auth Secret Key            |
+| Variable                       | Default                  | Description                              |
+|--------------------------------|--------------------------|------------------------------------------|
+| `PORT`                         | `8080`                   | HTTP server port                         |
+| `DB_PATH`                      | `./simpleboard.db`       | SQLite database file path                |
+| `CORS_ORIGINS`                 | `http://localhost:4200`  | Comma-separated allowed origins          |
+| `JWT_SECRET`                   | `no-secret`              | JWT Auth Secret Key                      |
+| `DEFAULT_TIME_CONTROL_SECONDS` | `600`                    | Default per-side clock for new games (s) |
+| `SWEEP_INTERVAL_SECONDS`       | `30`                     | Background flag-fall sweep interval (s)  |
 
 ## API Endpoints
 
@@ -124,9 +126,11 @@ The JWT token is given upon a successful login, and expires in 24 hours.
   "action": "create",
   "player_id": 1,
   "other_id": 2,
-  "starting_side": "w"
+  "starting_side": "w",
+  "time_control_seconds": 600
 }
 ```
+`time_control_seconds` is **optional**. Omit (or send `0`) to use the server default (`DEFAULT_TIME_CONTROL_SECONDS`, 10 min). Both sides get the same starting clock.
 
 #### Response
 ```
@@ -141,6 +145,11 @@ The JWT token is given upon a successful login, and expires in 24 hours.
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 600000,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
+            "server_time": "2026-03-26T01:27:40.740472882-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_player_id":1
         }
@@ -169,11 +178,17 @@ The JWT token is given upon a successful login, and expires in 24 hours.
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 597230,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
+            "server_time": "2026-03-26T01:27:43.973102000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_player_id":1
         }
 }
 ```
+The remaining-ms values returned for `state` are **live**: the active side's clock is computed as `stored - (server_time - last_move_at)`. Re-poll periodically and the active side's number will keep dropping. The inactive side's number is the stored value.
 
 #### Example Body
 ```
@@ -189,7 +204,7 @@ The JWT token is given upon a successful login, and expires in 24 hours.
 ```
 {
     "message":"move applied",
-        "user": {
+        "state": {
             "black_player_id":2,
             "created_at":"2026-03-26T01:27:40.740472882-04:00",
             "game_id":1,
@@ -198,8 +213,81 @@ The JWT token is given upon a successful login, and expires in 24 hours.
             "side":"b",
             "state":"rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 1 1",
             "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 594120,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:33:52.383454683-04:00",
             "white_player_id":1
         }
 }
 ```
+On a successful move, the responding side has switched (`side` is now the opponent), the moving player's elapsed time has been deducted from their clock, and `last_move_at` jumps to the move time. If the moving player's clock had already run out, the response instead has `"message":"flag fall"` and `status` is set to `WinWhite` or `WinBlack` -- the move is **not** applied in that case.
+
+## Game Timer (frontend integration)
+
+Every game now carries a per-side chess clock. The server is the source of truth -- it decides when a player has run out of time, so clients can never cheat by stalling. This section is everything the frontend needs to render and use it.
+
+### State payload fields
+
+Every `create` / `state` / `move` response includes these on the `state` object:
+
+| Field                  | Type      | Meaning                                                                  |
+|------------------------|-----------|--------------------------------------------------------------------------|
+| `time_control_seconds` | int       | Starting clock per side (e.g. `600` = 10 min)                            |
+| `white_remaining_ms`   | int       | White's remaining time, in milliseconds                                  |
+| `black_remaining_ms`   | int       | Black's remaining time, in milliseconds                                  |
+| `last_move_at`         | timestamp | When the active side's clock started ticking (game start, or last move)  |
+| `server_time`          | timestamp | Server's current time at the moment of response (for drift correction)   |
+| `side`                 | `"w"`/`"b"` | Whose turn it is -- this is the side whose clock is currently ticking  |
+| `status`               | string    | `InProgress`, `Draw`, `WinWhite`, `WinBlack` (last two cover flag falls) |
+
+The remaining-ms values are **already live** at the moment of response: for the side whose clock is ticking, the server has already subtracted `(server_time - last_move_at)` before sending. You don't need to re-do that math on receipt.
+
+### Rendering a smooth countdown between polls
+
+Polling every second would waste bandwidth. The recommended pattern:
+
+1. On each response, capture `serverTime` and `lastMoveAt` from the payload, plus the local clock time `t0 = Date.now()` at receipt.
+2. For the **active side** (`side` field), display:
+   ```
+   activeRemainingMs - (Date.now() - t0)
+   ```
+   (i.e. start a local 1-second tick and decrement smoothly)
+3. For the **inactive side**, just display the stored remaining ms (it's frozen).
+4. Re-poll `state` every ~5-10 seconds to resync against drift, or after every move you receive.
+
+`server_time` exists so you can detect clock drift between client and server -- if you want to be robust, anchor display time to `server_time` rather than `Date.now()`.
+
+### Setting a custom time control
+
+When calling `action: "create"`, optionally pass `time_control_seconds`. Examples:
+
+| Mode    | Seconds |
+|---------|---------|
+| Bullet  | `60` or `120` |
+| Blitz   | `180` or `300` |
+| Rapid   | `600` (default) or `900` |
+| Classical | `1800`+ |
+
+Omit the field, send `0`, or send a negative value -> server falls back to `DEFAULT_TIME_CONTROL_SECONDS` (10 min).
+
+### What happens when a clock runs out
+
+1. **During a move**: if the moving player's flag has fallen, the server returns `"message":"flag fall"`, sets `status` to `WinWhite` or `WinBlack`, and the move is **rejected** (board state is unchanged).
+2. **During a state poll**: if the active side has run out while idle, the server marks the game as ended and returns the final status. Clients see `status` flip from `InProgress` to `WinWhite` / `WinBlack` between polls.
+3. **With nobody polling**: a background sweeper goroutine scans in-progress games every `SWEEP_INTERVAL_SECONDS` (default 30s) and ends any whose active side has flag-fallen. So a game can't sit alive forever just because both browsers were closed.
+
+After flag fall, the loser's `*_remaining_ms` is `0`. The opponent's number is whatever was stored at the moment of the loss.
+
+### Status values to watch for
+
+| Status       | Meaning                                                               |
+|--------------|-----------------------------------------------------------------------|
+| `InProgress` | Game is live, clocks tick on the active side                          |
+| `Draw`       | Stalemate / 50-move rule / etc.                                       |
+| `WinWhite`   | White wins (checkmate, resignation, **or black flag-fell on time**)   |
+| `WinBlack`   | Black wins (checkmate, resignation, **or white flag-fell on time**)   |
+
+The status string alone doesn't tell you whether a win was by checkmate or by time -- if you need to differentiate in the UI, check whether the loser's `*_remaining_ms` is `0` at game end.

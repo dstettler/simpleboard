@@ -8,7 +8,7 @@ import (
 // Game is an instance of an active game session
 // Stores player IDs, game state, and timestamps
 type Game struct {
-	ID            uint           `gorm:"uniqueIndex;primaryKey;autoIncrement`
+	ID            uint           `gorm:"uniqueIndex;primaryKey;autoIncrement"`
 	WhitePlayerID uint           `json:"white_player_id"`
 	BlackPlayerID uint           `json:"black_player_id"`
 	WhiteGuestID  string         `json:"white_guest_id"`
@@ -18,6 +18,10 @@ type Game struct {
 	Side          string         `gorm:"size:1; not null"`
 	NextMoves     datatypes.JSON `gorm:"type:json"`
 	PrevMoves     datatypes.JSON `gorm:"type:json"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	TimeControlSeconds int       `json:"time_control_seconds"`
+	WhiteRemainingMs   int64     `json:"white_remaining_ms"`
+	BlackRemainingMs   int64     `json:"black_remaining_ms"`
+	LastMoveAt         time.Time `json:"last_move_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
