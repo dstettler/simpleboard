@@ -189,8 +189,7 @@ export class BoardStateService {
           }));
 
          const serverTimeStr = resp.state.server_time;
-          const serverTime = new Date(serverTimeStr + "Z");
-          console.log(serverTime)
+          const serverTime = new Date(serverTimeStr);
 
           const timeDelta = Date.now() - serverTime.getTime();
 

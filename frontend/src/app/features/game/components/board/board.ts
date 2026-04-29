@@ -24,8 +24,10 @@ export class Board {
 
   boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
   side: Signal<PlayerColor> = this.stateService.userColor;
+  boardTimer: Signal<number> = this.stateService.timerRemainingMs;
   boardPiecesObservable$ = toObservable(this.boardPieces);
   sideObservable$ = toObservable(this.side);
+  boardTimerObservable$ = toObservable(this.boardTimer);
 
   ngOnInit() {
     const userId = Number(this.authService.userId());
@@ -41,5 +43,10 @@ export class Board {
     const row = Math.floor(i / 8)
     const col = i % 8;
     return (row + col) % 2 !== 0
+  }
+
+  getTimerText(i: number): string {
+    const wholeNum = Math.round(i / 1000);
+    return `Your Time: ${wholeNum}s`
   }
 }
