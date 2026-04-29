@@ -33,6 +33,8 @@ type GameApiResponse = {
   last_move_at: string;
   server_time: string;
   updated_at: string;
+  black_guest_id: string;
+  white_guest_id: string;
 }
 
 type GameApiError = {
@@ -164,9 +166,15 @@ export class BoardStateService {
               case Number(resp.state.black_player_id):
                 this._userColor.update(_ => 'b');
                 break;
+              case Number(resp.state.black_guest_id):
+                this._userColor.update(_ => 'b');
+                break;
               case Number(resp.state.white_player_id):
                 this._userColor.update(_ => 'w');
                 break;
+              case Number(resp.state.white_guest_id):
+                this._userColor.update(_ => 'w');
+              break;
               default:
                 console.error("Player id matches neither side.");
                 throw new Error("Player id matches neither side.");
