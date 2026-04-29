@@ -5,27 +5,29 @@ Go backend server for the Simpleboard chess application.
 ## Directory Structure
 
 ```
-backend/
+backend/simpleboard/
 ├── api/                    # HTTP router and route definitions
 ├── cmd/
 │   └── simpleboard/        # Application entry point (main.go)
 ├── internal/               # Private application packages
+|   ├── auth/               # Authentication
 │   ├── chess/              # Chess rule logic and FEN handling
 │   ├── domain/             # Domain type definitions
 │   ├── handler/            # HTTP request handlers
-│   ├── auth/               # Authentication
 │   ├── repository/         # GORM model structs
-│   └── service/            # Business logic services
+|   ├── timer/              # Game timer functionality
+|   └── utils/              # Backend utils functions
 ├── pkg/                    # Shared utility packages
 │   ├── config/             # Runtime configuration loader
 │   ├── db/                 # Database connection wrapper
 │   └── response/           # JSON response and error helpers
-└── simpleboard.db          # Database instance
+└── simpleboard.db          # Database instance (example path)
 ```
 
 ## Getting Started
 
 ```bash
+cd simpleboard
 go build ./cmd/simpleboard
 ./simpleboard.exe
 ```
@@ -33,6 +35,12 @@ go build ./cmd/simpleboard
 The server starts on port **8080** by default.
 
 ## Environment Variables
+Environment variables for the backend can be easily defined in an `env.sh` using the template:
+``` bash
+cp env.sh.template env.sh
+nano env.sh # edit values as needed
+source ./env.sh
+```
 
 | Variable                       | Default                  | Description                              |
 |--------------------------------|--------------------------|------------------------------------------|
@@ -144,7 +152,7 @@ The JWT token is given upon a successful login or guest user creation, and expir
   "player_id": 1,
   "other_id": 2, // optional - only for games w/ 2 known users to start
   "starting_side": "w"
-  "time_control_seconds": 600
+  "time_control_seconds": 700
 }
 ```
 `time_control_seconds` is **optional**. Omit (or send `0`) to use the server default (`DEFAULT_TIME_CONTROL_SECONDS`, 10 min). Both sides get the same starting clock.
@@ -163,9 +171,9 @@ The JWT token is given upon a successful login or guest user creation, and expir
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
-            "time_control_seconds": 600,
-            "white_remaining_ms": 600000,
-            "black_remaining_ms": 600000,
+            "time_control_seconds": 700,
+            "white_remaining_ms": 694120,
+            "black_remaining_ms": 700000,
             "last_move_at": "2026-03-26T01:27:40.740472882-04:00",
             "server_time": "2026-03-26T01:27:40.740472882-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
@@ -198,6 +206,11 @@ The JWT token is given upon a successful login or guest user creation, and expir
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"NotStarted",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 600000,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_guest_id":"eb8b31d5-32cd-4d45-956d-0dde533e3c4d"
             "white_player_id":0
@@ -228,6 +241,11 @@ The JWT token is given upon a successful login or guest user creation, and expir
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"NotStarted",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 600000,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_guest_id":""
             "white_player_id":1
@@ -258,6 +276,11 @@ The JWT token is given upon a successful login or guest user creation, and expir
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 594120,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_guest_id":"",
             "white_player_id":1
@@ -288,6 +311,11 @@ The JWT token is given upon a successful login or guest user creation, and expir
             "side":"w",
             "state":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "status":"InProgress",
+            "time_control_seconds": 600,
+            "white_remaining_ms": 594120,
+            "black_remaining_ms": 600000,
+            "last_move_at": "2026-03-26T01:33:52.383454683-04:00",
+            "server_time": "2026-03-26T01:33:52.391204000-04:00",
             "updated_at":"2026-03-26T01:27:40.740472882-04:00",
             "white_guest_id":"",
             "white_player_id":1
@@ -368,7 +396,7 @@ The remaining-ms values returned for `state` are **live**: the active side's clo
 ```
 On a successful move, the responding side has switched (`side` is now the opponent), the moving player's elapsed time has been deducted from their clock, and `last_move_at` jumps to the move time. If the moving player's clock had already run out, the response instead has `"message":"flag fall"` and `status` is set to `WinWhite` or `WinBlack` -- the move is **not** applied in that case.
 
-## Game Timer (frontend integration)
+## Game Timer Functionality
 
 Every game now carries a per-side chess clock. The server is the source of truth -- it decides when a player has run out of time, so clients can never cheat by stalling. This section is everything the frontend needs to render and use it.
 
