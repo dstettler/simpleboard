@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 // Game endpoint
@@ -294,6 +295,7 @@ func Game(c *gin.Context) {
 				entry.BlackRemainingMs = 0
 			}
 			db.DB.Save(&entry)
+			recordGameOutcome(&entry, entry.Status)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -359,6 +361,7 @@ func Game(c *gin.Context) {
 		if timedOut, loser := timer.ApplyMove(&entry, time.Now()); timedOut {
 			entry.Status = timer.FlagFallStatus(loser).String()
 			db.DB.Save(&entry)
+			recordGameOutcome(&entry, entry.Status)
 			c.JSON(http.StatusOK, gin.H{
 				"message": "flag fall",
 				"state":   gameStatePayload(&entry, entry.WhiteRemainingMs, entry.BlackRemainingMs),
@@ -399,6 +402,11 @@ func Game(c *gin.Context) {
 
 		db.DB.Save(&entry)
 
+		// record outcome if this move ended the game
+		if game.Status != chess.InProgress {
+			recordGameOutcome(&entry, entry.Status)
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"message": "move applied",
 			"state":   gameStatePayload(&entry, entry.WhiteRemainingMs, entry.BlackRemainingMs),
@@ -431,6 +439,29 @@ func gameStatePayload(entry *repository.Game, whiteMs, blackMs int64) gin.H {
 		"server_time":          time.Now().UTC(),
 		"created_at":           entry.CreatedAt,
 		"updated_at":           entry.UpdatedAt,
+	}
+}
+
+// recordGameOutcome bumps win/loss/total counts for registered players when a game ends.
+// Guests don't have persistent records, so they're skipped.
+func recordGameOutcome(entry *repository.Game, status string) {
+	bump := func(userID uint, fields map[string]interface{}) {
+		if userID == 0 {
+			return
+		}
+		db.DB.Model(&repository.User{}).Where("user_id = ?", userID).Updates(fields)
+	}
+
+	switch status {
+	case chess.WinWhite.String():
+		bump(entry.WhitePlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1"), "wins": gorm.Expr("wins + 1")})
+		bump(entry.BlackPlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1"), "losses": gorm.Expr("losses + 1")})
+	case chess.WinBlack.String():
+		bump(entry.BlackPlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1"), "wins": gorm.Expr("wins + 1")})
+		bump(entry.WhitePlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1"), "losses": gorm.Expr("losses + 1")})
+	case chess.Draw.String():
+		bump(entry.WhitePlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1")})
+		bump(entry.BlackPlayerID, map[string]interface{}{"total_games": gorm.Expr("total_games + 1")})
 	}
 }
 
