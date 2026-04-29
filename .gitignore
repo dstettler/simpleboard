@@ -6,3 +6,4 @@ tmp/
 *.exe
 *.db
 env.sh
+backend/simpleboard

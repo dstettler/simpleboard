@@ -7,7 +7,7 @@ import { ChessPiece, Rook, Knight, Bishop, Queen, King, Pawn } from './pieces/Ch
 import { positionToAlgebraic, algebraicToPosition, positionsEqual } from './pieces/Position';
 import { API_ENDPOINT } from '../../../app.constants';
 
-export const mockBoardStateResponse = { user: {
+export const mockBoardStateResponse = { state: {
   "state": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     "next_moves": ["a2a3"],
     "side": "w",
@@ -61,8 +61,8 @@ describe('BoardStateService', () => {
   });
 
   it('should load state from request', () => {
-    service.boardLoad(0, 1, 'w').subscribe(_ => {
-      expect(service.userColor()).toBe('w');
+    service.boardLoad(0, 1).subscribe(_ => {
+      expect(service.userColor()).toBe('b');
       expect(service.fullmoveNum()).toBe(1);
 
       // Only one next move is provided, so we can directly index this

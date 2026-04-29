@@ -1,12 +1,13 @@
-import { Component, inject, Signal } from '@angular/core';
+import { Component, inject, Input, Signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { BoardStateService } from '../../services/board-state-service';
+import { BoardStateService, PlayerColor } from '../../services/board-state-service';
 import { Piece } from '../piece/piece';
 import { ChessPiece } from '../../services/pieces/ChessPiece';
 import { Position } from '../../services/pieces/Position';
 
+import { AuthStateService } from '../../../../core/services/auth-state.service';
 @Component({
   selector: 'app-board',
   imports: [AsyncPipe, Piece],
@@ -16,18 +17,24 @@ import { Position } from '../../services/pieces/Position';
 export class Board {
   grid = Array.from({ length: 64 });
 
-  private stateService = inject(BoardStateService);
-  boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
-  boardPiecesObservable$ = toObservable(this.boardPieces);
+  @Input() gameId!: string;
 
-  constructor() {
-    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
-    this.stateService.boardLoad(1, 0, 'w').subscribe();
+  private stateService = inject(BoardStateService);
+  private authService = inject(AuthStateService);
+
+  boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
+  side: Signal<PlayerColor> = this.stateService.userColor;
+  boardPiecesObservable$ = toObservable(this.boardPieces);
+  sideObservable$ = toObservable(this.side);
+
+  ngOnInit() {
+    const userId = Number(this.authService.userId());
+    this.stateService.boardLoad(Number(this.gameId), userId).subscribe();
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    // TODO this needs to be replaced. Discuss @ #74 (https://github.com/dstettler/simpleboard/issues/74)
-    this.stateService.updatePiecePosition(1, 0, piece, target).subscribe();
+    const userId = Number(this.authService.userId());
+    this.stateService.updatePiecePosition(Number(this.gameId), userId, piece, target).subscribe();
   }
 
   isDarkSquare(i: number): boolean {
