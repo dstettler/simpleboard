@@ -26,8 +26,8 @@ func DefaultControlSeconds() int {
 	return defaultControlSeconds
 }
 
-// InitGame stamps initial clock state on a new game
-func InitGame(g *repository.Game, controlSeconds int, now time.Time) {
+// InitGameTime stamps initial clock state on a new game
+func InitGameTime(g *repository.Game, controlSeconds int, now time.Time) {
 	if controlSeconds <= 0 {
 		controlSeconds = defaultControlSeconds
 	}

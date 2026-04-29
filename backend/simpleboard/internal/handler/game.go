@@ -108,7 +108,7 @@ func Game(c *gin.Context) {
 		}
 
 		// stamp initial clock state; white's time starts ticking from now
-		timer.InitGame(&entry, input.TimeControlSeconds, time.Now())
+		timer.InitGameTime(&entry, input.TimeControlSeconds, time.Now())
 
 		// create entry
 		if err := db.DB.Create(&entry).Error; err != nil {

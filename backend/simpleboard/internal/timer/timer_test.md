@@ -21,12 +21,12 @@ go test -v -run TestMarkIfTimedOut ./internal/timer/
 The timer package is CGO-free: every test runs against in-memory structs, no SQLite driver required. `go test ./internal/timer/...` works on a clean Go install with no extra toolchain.
 
 
-### InitGame
+### InitGameTime
 
 | Test                                            | What it checks
 |-------------------------------------------------|----------------
-| TestInitGame_UsesProvidedControl                | Provided control value sets TimeControlSeconds, both clocks = control * 1000 ms, LastMoveAt = `now`
-| TestInitGame_FallsBackToDefaultWhenZeroOrNegative | Zero and negative inputs both fall back to the package default (600s)
+| TestInitGameTime_UsesProvidedControl                | Provided control value sets TimeControlSeconds, both clocks = control * 1000 ms, LastMoveAt = `now`
+| TestInitGameTime_FallsBackToDefaultWhenZeroOrNegative | Zero and negative inputs both fall back to the package default (600s)
 
 
 ### ApplyMove
@@ -66,6 +66,6 @@ The timer package is CGO-free: every test runs against in-memory structs, no SQL
 
 ## Test design notes
 
-- The pure helpers (`InitGame`, `ApplyMove`, `LiveRemaining`, `FlagFallStatus`, `markIfTimedOut`) operate on `*repository.Game` structs in memory, so all 13 tests run without spinning up SQLite or any other dependency.
+- The pure helpers (`InitGameTime`, `ApplyMove`, `LiveRemaining`, `FlagFallStatus`, `markIfTimedOut`) operate on `*repository.Game` structs in memory, so all 13 tests run without spinning up SQLite or any other dependency.
 - `markIfTimedOut` was extracted from `sweepOnce` specifically so the per-game decision logic can be unit-tested without a real database. The DB-coupled `sweepOnce` itself is a thin loop (query -> apply -> save) and is left to integration testing.
 - The `_ClampsBackwardClockSkew` and `_DoesNotMutate` cases guard properties that are easy to regress on -- negative durations and accidental writes through the live-clock helper. Worth keeping if anyone refactors the timer math.

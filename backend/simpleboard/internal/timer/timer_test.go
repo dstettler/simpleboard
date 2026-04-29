@@ -20,11 +20,11 @@ func newGame(side string, whiteMs, blackMs int64, lastMove time.Time) *repositor
 	}
 }
 
-func TestInitGame_UsesProvidedControl(t *testing.T) {
+func TestInitGameTime_UsesProvidedControl(t *testing.T) {
 	g := &repository.Game{}
 	now := time.Now()
 
-	InitGame(g, 300, now)
+	InitGameTime(g, 300, now)
 
 	if g.TimeControlSeconds != 300 {
 		t.Errorf("TimeControlSeconds = %d, want 300", g.TimeControlSeconds)
@@ -37,17 +37,17 @@ func TestInitGame_UsesProvidedControl(t *testing.T) {
 	}
 }
 
-func TestInitGame_FallsBackToDefaultWhenZeroOrNegative(t *testing.T) {
+func TestInitGameTime_FallsBackToDefaultWhenZeroOrNegative(t *testing.T) {
 	defaultControlSeconds = 600 // ensure baseline
 	g := &repository.Game{}
 
-	InitGame(g, 0, time.Now())
+	InitGameTime(g, 0, time.Now())
 	if g.TimeControlSeconds != 600 {
 		t.Errorf("zero input: got %d, want 600 (default)", g.TimeControlSeconds)
 	}
 
 	g2 := &repository.Game{}
-	InitGame(g2, -5, time.Now())
+	InitGameTime(g2, -5, time.Now())
 	if g2.TimeControlSeconds != 600 {
 		t.Errorf("negative input: got %d, want 600 (default)", g2.TimeControlSeconds)
 	}
