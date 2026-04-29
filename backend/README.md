@@ -53,13 +53,15 @@ source ./env.sh
 
 ## API Endpoints
 
-| Method | Path           | Description          |
-|--------|----------------|----------------------|
-| GET    | `/api/health`  | Health check         |
-| GET    | `/api/guest`   | Generate a guest id  |
-| POST   | `/api/register`| Register account     |
-| POST   | `/api/login`   | Login to account     |
-| POST   | `/api/game`    | Game interaction     |
+| Method | Path             | Auth required | Description                      |
+|--------|------------------|---------------|----------------------------------|
+| GET    | `/api/health`    | No            | Health check                     |
+| GET    | `/api/guest`     | No            | Generate a guest token           |
+| POST   | `/api/register`  | No            | Register a new account           |
+| POST   | `/api/login`     | No            | Login, returns token + streak    |
+| POST   | `/api/game`      | Yes           | Create / join / poll / move      |
+| GET    | `/api/dashboard` | Yes (user)    | Lifetime stats for current user  |
+| GET    | `/api/games`     | Yes (user)    | Game history for current user    |
 
 ## Usage
 
@@ -462,3 +464,158 @@ After flag fall, the loser's `*_remaining_ms` is `0`. The opponent's number is w
 | `WinBlack`   | Black wins (checkmate, resignation, **or white flag-fell on time**)   |
 
 The status string alone doesn't tell you whether a win was by checkmate or by time -- if you need to differentiate in the UI, check whether the loser's `*_remaining_ms` is `0` at game end.
+
+---
+
+## User Stats, Game History & Daily Streak
+
+These three endpoints back the dashboard and streak features (#41, #43, #86). All require a registered user token — guests get `401`.
+
+---
+
+### Updated: POST `/api/login` response
+
+The login response now includes streak fields so the UI can show the streak immediately after sign-in without a second request.
+
+```json
+{
+  "message": "login successful",
+  "token": "<jwt>",
+  "user": {
+    "user_id": 1,
+    "username": "alice",
+    "email": "alice@example.com",
+    "current_streak": 4,
+    "longest_streak": 12
+  }
+}
+```
+
+---
+
+### GET `/api/dashboard` → `200`
+
+Returns lifetime stats for the currently authenticated user.
+
+**Headers**
+```
+Authorization: Bearer <token>
+```
+
+**Response**
+```json
+{
+  "user_id":        1,
+  "username":       "alice",
+  "total_games":    38,
+  "wins":           20,
+  "losses":         14,
+  "win_rate":       0.526,
+  "current_streak": 4,
+  "longest_streak": 12
+}
+```
+
+| Field            | Type    | Notes                                             |
+|------------------|---------|---------------------------------------------------|
+| `total_games`    | int     | All completed games (wins + losses + draws)       |
+| `wins`           | int     | Games won                                         |
+| `losses`         | int     | Games lost                                        |
+| `win_rate`       | float64 | `wins / total_games`; `0.0` if no games yet       |
+| `current_streak` | int     | Consecutive days logged in ending today           |
+| `longest_streak` | int     | All-time best streak                              |
+
+> **Note:** `total_games` counts draws too, so `wins + losses` may be less than `total_games`.
+
+---
+
+### GET `/api/games` → `200`
+
+Returns the authenticated user's game history, newest first.
+
+**Headers**
+```
+Authorization: Bearer <token>
+```
+
+**Response**
+```json
+{
+  "user_id": 1,
+  "games": [
+    {
+      "game_id":     "f0e510f2-0d72-4ce2-ab38-025e224c55c0",
+      "status":      "WinWhite",
+      "played_as":   "w",
+      "opponent_id": 2,
+      "created_at":  "2026-04-28T14:00:00Z",
+      "updated_at":  "2026-04-28T14:22:00Z"
+    },
+    {
+      "game_id":     "a1b2c3d4-...",
+      "status":      "WinBlack",
+      "played_as":   "b",
+      "opponent_id": 0,
+      "created_at":  "2026-04-27T10:00:00Z",
+      "updated_at":  "2026-04-27T10:31:00Z"
+    }
+  ]
+}
+```
+
+| Field         | Type   | Notes                                                   |
+|---------------|--------|---------------------------------------------------------|
+| `game_id`     | string | UUID of the game                                        |
+| `status`      | string | `NotStarted`, `InProgress`, `Draw`, `WinWhite`, `WinBlack` |
+| `played_as`   | string | `"w"` or `"b"` — which side this user played            |
+| `opponent_id` | uint   | The other player's user ID; `0` if they were a guest    |
+| `created_at`  | string | ISO 8601 timestamp                                      |
+| `updated_at`  | string | ISO 8601 timestamp — effectively when the game ended    |
+
+---
+
+### How the daily streak works
+
+The streak is **login-based**: it increments once per calendar day (UTC midnight boundary) when the user logs in.
+
+| Scenario                         | Effect                          |
+|----------------------------------|---------------------------------|
+| First ever login                 | `current_streak = 1`            |
+| Login on a day after yesterday   | `current_streak += 1`           |
+| Login again on the same day      | No change (already counted)     |
+| Skip a day and log in            | `current_streak` resets to `1`  |
+| New streak exceeds longest       | `longest_streak` is updated     |
+
+`current_streak` and `longest_streak` are returned in both the `/api/login` response and `/api/dashboard` — show whichever fits the UI context.
+
+**Game stats** (`wins`, `losses`, `total_games`) update automatically the moment a game ends — checkmate, stalemate, 50-move draw, or flag fall. Guest players don't accumulate stats; only registered accounts do.
+
+---
+
+### Suggested frontend model
+
+```typescript
+interface DashboardResponse {
+  user_id:        number;
+  username:       string;
+  total_games:    number;
+  wins:           number;
+  losses:         number;
+  win_rate:       number;   // 0.0–1.0
+  current_streak: number;
+  longest_streak: number;
+}
+
+interface GameHistoryEntry {
+  game_id:     string;
+  status:      'NotStarted' | 'InProgress' | 'Draw' | 'WinWhite' | 'WinBlack';
+  played_as:   'w' | 'b';
+  opponent_id: number;      // 0 = guest opponent
+  created_at:  string;
+  updated_at:  string;
+}
+
+interface GamesResponse {
+  user_id: number;
+  games:   GameHistoryEntry[];
+}
