@@ -469,7 +469,7 @@ The status string alone doesn't tell you whether a win was by checkmate or by ti
 
 ## User Stats, Game History & Daily Streak
 
-These three endpoints back the dashboard and streak features (#41, #43, #86). All require a registered user token — guests get `401`.
+These three endpoints back the dashboard and streak features. All require a registered user token — guests get `401`.
 
 ---
 
@@ -576,15 +576,7 @@ Authorization: Bearer <token>
 
 ### How the daily streak works
 
-The streak is **login-based**: it increments once per calendar day (UTC midnight boundary) when the user logs in.
-
-| Scenario                         | Effect                          |
-|----------------------------------|---------------------------------|
-| First ever login                 | `current_streak = 1`            |
-| Login on a day after yesterday   | `current_streak += 1`           |
-| Login again on the same day      | No change (already counted)     |
-| Skip a day and log in            | `current_streak` resets to `1`  |
-| New streak exceeds longest       | `longest_streak` is updated     |
+The streak is **login-based**: it increments once per calendar day when the user logs in.
 
 `current_streak` and `longest_streak` are returned in both the `/api/login` response and `/api/dashboard` — show whichever fits the UI context.
 
@@ -592,30 +584,3 @@ The streak is **login-based**: it increments once per calendar day (UTC midnight
 
 ---
 
-### Suggested frontend model
-
-```typescript
-interface DashboardResponse {
-  user_id:        number;
-  username:       string;
-  total_games:    number;
-  wins:           number;
-  losses:         number;
-  win_rate:       number;   // 0.0–1.0
-  current_streak: number;
-  longest_streak: number;
-}
-
-interface GameHistoryEntry {
-  game_id:     string;
-  status:      'NotStarted' | 'InProgress' | 'Draw' | 'WinWhite' | 'WinBlack';
-  played_as:   'w' | 'b';
-  opponent_id: number;      // 0 = guest opponent
-  created_at:  string;
-  updated_at:  string;
-}
-
-interface GamesResponse {
-  user_id: number;
-  games:   GameHistoryEntry[];
-}

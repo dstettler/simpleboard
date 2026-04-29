@@ -35,7 +35,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// update daily streak on each new-day login
 	updateStreak(&user)
 
 	token, err := auth.NewUserToken(user.UserID, 24*time.Hour)
@@ -58,13 +57,11 @@ func Login(c *gin.Context) {
 	})
 }
 
-// updateStreak increments the user's daily streak if this is their first login today.
-// A new calendar day (midnight UTC) resets or extends the streak.
+// updateStreak checks for new daily login and increments the streak
 func updateStreak(user *repository.User) {
 	today := time.Now().UTC().Truncate(24 * time.Hour)
 	last := user.LastLoginDate.UTC().Truncate(24 * time.Hour)
 
-	// already logged in today — nothing to do
 	if last.Equal(today) {
 		return
 	}

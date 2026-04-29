@@ -402,7 +402,7 @@ func Game(c *gin.Context) {
 
 		db.DB.Save(&entry)
 
-		// record outcome if this move ended the game
+		// record outcome if move ends the game
 		if game.Status != chess.InProgress {
 			recordGameOutcome(&entry, entry.Status)
 		}
@@ -442,8 +442,7 @@ func gameStatePayload(entry *repository.Game, whiteMs, blackMs int64) gin.H {
 	}
 }
 
-// recordGameOutcome bumps win/loss/total counts for registered players when a game ends.
-// Guests don't have persistent records, so they're skipped.
+// recordGameOutcome updates win/loss/total counts for registered players when a game ends.
 func recordGameOutcome(entry *repository.Game, status string) {
 	bump := func(userID uint, fields map[string]interface{}) {
 		if userID == 0 {

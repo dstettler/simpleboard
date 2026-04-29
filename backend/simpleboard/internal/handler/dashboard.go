@@ -11,7 +11,6 @@ import (
 )
 
 // Dashboard returns lifetime stats for the authenticated user.
-// Guests are not supported — a registered account is required.
 func Dashboard(c *gin.Context) {
 	claims := auth.GetClaims(c)
 	if claims == nil || claims.UserID == nil {
@@ -42,19 +41,17 @@ func Dashboard(c *gin.Context) {
 	})
 }
 
-// gameHistoryEntry is what we return per game in the history list.
-// Kept flat and small — the frontend doesn't need the full board state here.
+// gameHistoryEntry is returned per game in the history list
 type gameHistoryEntry struct {
 	GameID     string    `json:"game_id"`
 	Status     string    `json:"status"`
-	PlayedAs   string    `json:"played_as"`   // "w" or "b"
-	OpponentID uint      `json:"opponent_id"` // 0 if opponent was a guest
+	PlayedAs   string    `json:"played_as"`
+	OpponentID uint      `json:"opponent_id"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-// Games returns the authenticated user's game history, newest first.
-// Only finished or in-progress games where the user was a registered player are included.
+// Games returns the authenticated user's game history
 func Games(c *gin.Context) {
 	claims := auth.GetClaims(c)
 	if claims == nil || claims.UserID == nil {
@@ -64,7 +61,7 @@ func Games(c *gin.Context) {
 
 	uid := *claims.UserID
 
-	// find all games where this user was white or black
+	// find all games
 	var games []repository.Game
 	if err := db.DB.Where("white_player_id = ? OR black_player_id = ?", uid, uid).
 		Order("created_at DESC").
