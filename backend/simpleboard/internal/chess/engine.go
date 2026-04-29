@@ -588,27 +588,34 @@ func (g *ChessGame) IsAttacked(r, f int) bool {
 					break
 				}
 
+				// check if enemy piece is an attacking piece
+				isAttacker := false
 				if white {
 					if a == "Q" {
-						return true
-					} // queen
+						isAttacker = true
+					}
 					if a == "B" && (v[0] != 0 && v[1] != 0) {
-						return true
-					} // diagonal path
+						isAttacker = true
+					}
 					if a == "R" && (v[0] == 0 || v[1] == 0) {
-						return true
-					} // straight path
+						isAttacker = true
+					}
 				} else {
 					if a == "q" {
-						return true
-					} // queen
+						isAttacker = true
+					}
 					if a == "b" && (v[0] != 0 && v[1] != 0) {
-						return true
-					} // diagonal path
+						isAttacker = true
+					}
 					if a == "r" && (v[0] == 0 || v[1] == 0) {
-						return true
-					} // straight path
+						isAttacker = true
+					}
 				}
+
+				if isAttacker {
+					return true
+				}
+				break // enemy piece blocks the line, even if it doesn't attack
 			}
 
 			s += 1
