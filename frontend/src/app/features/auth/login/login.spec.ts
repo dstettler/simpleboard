@@ -6,6 +6,14 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
 
   beforeEach(async () => {
+    const localStorage = {
+      getItem: (_key: string) => {
+        return "1";
+      }
+    }
+
+    Object.defineProperty(window, 'localStorage', { value:  localStorage });
+
     await TestBed.configureTestingModule({
       imports: [LoginComponent]
     }).compileComponents();

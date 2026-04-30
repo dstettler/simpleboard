@@ -1,4 +1,7 @@
 <!-- Base board layout -->
+@if (boardTimerObservable$ | async; as timer) {
+  <span id="game-timer">{{ getTimerText(timer) }}</span>
+}
 <div id="board" #board>
     @if (boardPiecesObservable$ | async; as piecesArray) {
 

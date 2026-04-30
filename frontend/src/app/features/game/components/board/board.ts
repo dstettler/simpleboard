@@ -25,6 +25,7 @@ export class Board {
   // Readonly signals
   private boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
   private side: Signal<PlayerColor> = this.stateService.userColor;
+  private boardTimer: Signal<number> = this.stateService.timerRemainingMs;
 
   // Writeable signals
   private targetable = signal<Position[]|null>(null);
@@ -32,11 +33,12 @@ export class Board {
   // Derived observables
   readonly boardPiecesObservable$ = toObservable(this.boardPieces);
   readonly sideObservable$ = toObservable(this.side);
+  readonly boardTimerObservable$ = toObservable(this.boardTimer);
   readonly targetableObservable$ = toObservable(this.targetable);
 
   ngOnInit() {
     const userId = Number(this.authService.userId());
-    this.stateService.boardLoad(Number(this.gameId), userId).subscribe();
+    this.stateService.boardLoad(this.gameId, userId).subscribe();
   }
 
   onPieceSelected(piece: ChessPiece) {
@@ -46,7 +48,7 @@ export class Board {
 
   onPieceMoved(piece: ChessPiece, target: Position) {
     const userId = Number(this.authService.userId());
-    this.stateService.updatePiecePosition(Number(this.gameId), userId, piece, target).subscribe();
+    this.stateService.updatePiecePosition(this.gameId, userId, piece, target).subscribe();
   }
 
   isDarkSquare(i: number): boolean {
@@ -66,5 +68,10 @@ export class Board {
     }
 
     return false;
+  }
+
+  getTimerText(i: number): string {
+    const wholeNum = Math.round(i / 1000);
+    return `Your Time: ${wholeNum}s`
   }
 }

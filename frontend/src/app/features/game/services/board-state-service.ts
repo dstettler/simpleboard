@@ -8,9 +8,10 @@ import { API_ENDPOINT, BACKEND_PING_RATE_MS } from '../../../app.constants';
 import { GameStatus, parseGameStatus } from './BoardState';
 
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+
 type GameRequest = {
   action: string;
-  game_id: number;
+  game_id: string;
   player_id: number;
   move: string;
 }
@@ -25,8 +26,13 @@ type GameApiResponse = {
   side: string;
   black_player_id: string;
   white_player_id: string;
-  next_moves: string[]
-  prev_moves: string[]
+  next_moves: string[];
+  prev_moves: string[];
+  white_remaining_ms: number;
+  black_remaining_ms: number;
+  last_move_at: string;
+  server_time: string;
+  updated_at: string;
 }
 
 type GameApiError = {
@@ -54,8 +60,10 @@ export class BoardStateService {
   private _nextMoves = signal<Move[]>([]);
   private _gameStatus = signal<GameStatus>("Waiting");
   private _playerId = signal<number>(-1);
-  private _gameId = signal<number>(-1);
+  private _gameId = signal<string>('');
+  private _timerRemainingMs = signal<number>(-1);
   private _pollBackend = signal<boolean>(false);
+  private _gameTimerRunning = signal<boolean>(false);
 
   readonly pieces = this._pieces.asReadonly();
   readonly isOwnMove = this._isOwnMove.asReadonly();
@@ -68,12 +76,14 @@ export class BoardStateService {
   readonly gameStatus = this._gameStatus.asReadonly();
   readonly playerId = this._playerId.asReadonly();
   readonly gameId = this._gameId.asReadonly();
+  readonly timerRemainingMs = this._timerRemainingMs.asReadonly();
   private readonly pollBackend = this._pollBackend.asReadonly();
+  private readonly gameTimerRunning = this._gameTimerRunning.asReadonly();
 
   private poll$ = toObservable(this.pollBackend).pipe(
     switchMap(p => p ? timer(0, BACKEND_PING_RATE_MS) : EMPTY),
     switchMap(() => {
-      if (this.playerId() != -1 && this.gameId() != -1) {
+      if (this.playerId() != -1 && this.gameId() != '') {
         return this.boardLoad(this.gameId(), this.playerId())
       } else {
         return EMPTY;
@@ -82,8 +92,26 @@ export class BoardStateService {
     takeUntilDestroyed()
   )
 
+  private gameTimer$ = toObservable(this.gameTimerRunning).pipe(
+    // If timer is runing (p), wait one second, update GUI signal
+    switchMap(p => p ? timer(0, 1000) : EMPTY),
+    switchMap(() => {
+      if (this.playerId() != -1 && this.gameId() != '') {
+        this._timerRemainingMs.update(prevTime => prevTime - 1000);
+
+        if (this.timerRemainingMs() < 0) {
+          return this.boardLoad(this.gameId(), this.playerId())
+        }
+      }
+
+      return EMPTY;
+    }),
+    takeUntilDestroyed()
+  )
+
   constructor() {
     this.poll$.subscribe();
+    this.gameTimer$.subscribe();
   }
 
   public getTargetables(pieceId: number): Position[]|null {
@@ -101,7 +129,7 @@ export class BoardStateService {
   /**
    * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */
-  boardLoad(gameId: number, playerId: number): Observable<void> {
+  boardLoad(gameId: string, playerId: number): Observable<void> {
     // Load initial state
     const req: GameRequest = {
       action:"state",
@@ -175,11 +203,29 @@ export class BoardStateService {
             throw new Error(`No piece found for target move ${move_str}`);
           }));
 
+         const serverTimeStr = resp.state.server_time;
+          const serverTime = new Date(serverTimeStr);
+
+          const timeDelta = Date.now() - serverTime.getTime();
+
+          if (this.userColor() == 'w') {
+            const trueRemaining = resp.state.white_remaining_ms;
+            this._timerRemainingMs.update(_ => trueRemaining - timeDelta);
+          } else if (this.userColor() == 'b') {
+            const trueRemaining = resp.state.black_remaining_ms;
+            this._timerRemainingMs.update(_ => trueRemaining - timeDelta);
+          }
+
           this._gameStatus.update(_p => parseGameStatus(resp.state.status));
-          if (this.isOwnMove()) {
+          if (this.isOwnMove() && resp.state.status == 'InProgress') {
+            this._gameTimerRunning.update(_ => true);
             this._pollBackend.update(_ => false);
-          } else {
+          } else if (resp.state.status == 'InProgress') {
+            this._gameTimerRunning.update(_ => false);
             this._pollBackend.update(_ => true);
+          } else {
+            this._gameTimerRunning.update(_ => false);
+            this._pollBackend.update(_ => false);
           }
 
           return;
@@ -188,7 +234,7 @@ export class BoardStateService {
     );
   }
 
-  updatePiecePosition(gameId: number, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
+  updatePiecePosition(gameId: string, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
     let captureChar = '';
     for (const piece of this._pieces()) {
       if (positionsEqual(piece.position, newPos))
