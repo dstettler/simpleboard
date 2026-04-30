@@ -47,6 +47,7 @@ export class Board {
 
   onPieceMoved(piece: ChessPiece, target: Position) {
     const userId = this.authService.userId();
+    this.targetable.update(_t => []);
     this.stateService.updatePiecePosition(this.gameId, userId, piece, target).subscribe();
   }
 

@@ -1,4 +1,4 @@
-const gameStatusMembers = ["InProgress", "Waiting", "Error"] as const;
+const gameStatusMembers = ["InProgress", "NotStarted", "Draw", "WinWhite", "WinBlack", "Error"] as const;
 export type GameStatus = typeof gameStatusMembers[number];
 
 export function parseGameStatus(statusStr: string): GameStatus {
