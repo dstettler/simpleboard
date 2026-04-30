@@ -7,7 +7,16 @@
 
 ## Work Completed
 ### Frontend
-- 
+- Game entry modal (create / join game)
+- Navbar and homepage Play button integration
+- GameService updated to match backend APIs
+- Auth interceptor integration for JWT/guest tokens
+- Routing to `/game/:id` after create/join
+- Game page and board rendering
+- Dashboard API integration (`/api/dashboard`)
+- UI improvements and styling fixes
+- Bug fixes for API errors and request handling
+
 ### Backend
 - Game timer functionality
 - Game queue table
@@ -17,6 +26,38 @@
 - Player statistics
 - Chess engine performance analysis
 
+### Frontend Architecture
+
+The frontend is built using Angular standalone components with a modular structure:
+
+- NavbarComponent → Navigation + Play modal trigger
+- GameEntryModalComponent → Create / Join game UI
+- GameComponent → Main game page (/game/:id)
+- BoardComponent → Chessboard rendering
+- PieceComponent → Individual chess pieces
+- DashboardComponent → User statistics display
+- LoginComponent → Authentication UI
+
+- ### Game Flow (Frontend)
+
+1. User clicks "Play"
+2. GameEntryModal opens
+3. User chooses:
+   - Create Game → POST /api/game (action: "create")
+   - Join Game → POST /api/game (action: "join")
+4. Backend returns game_id
+5. Frontend routes to /game/:id
+6. GameComponent loads game state via API
+7. Board renders and updates based on backend state
+
+### UI/UX Design
+
+- Centralized game entry via reusable modal
+- Consistent Play button across navbar and homepage
+- Responsive modal layout (create vs join sections)
+- Clean minimal dark theme for focus on gameplay
+
+  
 ## Tests (Frontend)
 ### Unit Tests
 - Dashboard component instantiates successfully
@@ -30,6 +71,12 @@
 - Validate algebraic strings
 - Validate position->algebraic logic
 - Validate loaded board state
+- - GameEntryModal component instantiates successfully
+- GameService instantiates successfully
+- GameService create game request maps backend `state.game_id`
+- GameService join game request maps backend `state.game_id`
+- GameService state request calls the backend game state action
+- Auth interceptor attaches token to protected requests
 ### Cypress Tests
 - `cypress/e2e/home.cy.ts`  
   - Verifies the home page loads successfully
