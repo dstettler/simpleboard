@@ -26,6 +26,7 @@ export class Board {
   private boardPieces: Signal<ChessPiece[]> = this.stateService.pieces;
   private side: Signal<PlayerColor> = this.stateService.userColor;
   private boardTimer: Signal<number> = this.stateService.timerRemainingMs;
+  private gameStatus = this.stateService.gameStatus;
 
   // Writeable signals
   private targetable = signal<Position[]|null>(null);
@@ -35,6 +36,7 @@ export class Board {
   readonly sideObservable$ = toObservable(this.side);
   readonly boardTimerObservable$ = toObservable(this.boardTimer);
   readonly targetableObservable$ = toObservable(this.targetable);
+  readonly gameStatusObservable$ = toObservable(this.gameStatus);
 
   ngOnInit() {
     this.stateService.boardLoad(this.gameId, this.authService.userId()).subscribe();
@@ -73,5 +75,18 @@ export class Board {
   getTimerText(i: number): string {
     const wholeNum = Math.round(i / 1000);
     return `Your Time: ${wholeNum}s`
+  }
+
+  getGameStatusText(status: string): string {
+    switch (status) {
+      case 'Draw':
+        return 'Game Drawn';
+      case 'WinWhite':
+        return 'White Wins!';
+      case 'WinBlack':
+        return 'Black Wins!';
+      default:
+        return 'Game Over';
+    }
   }
 }
