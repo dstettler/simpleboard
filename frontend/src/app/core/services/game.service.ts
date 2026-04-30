@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { map, switchMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 
+import { API_ENDPOINT } from '../../app.constants';
+
 import { AuthStateService } from './auth-state.service';
 
 @Injectable({
@@ -48,47 +50,75 @@ export class GameService {
 }
 
   createGame() {
-    return this.ensureGuestIfNeeded().pipe(
-      switchMap((identity) => {
-        const payload = identity.isGuest
+    console.log('creating game')
+    return this.http.get<any>(`${API_ENDPOINT}/api/health`).pipe(switchMap(() => {
+      console.log('health pinged')
+        const payload = this.authService.isGuest()
           ? {
               action: 'create',
-              guest_id: identity.id,
+              guest_id: this.authService.userId(),
               starting_side: 'w'
             }
           : {
               action: 'create',
-              player_id: Number(identity.id),
+              player_id: Number(this.authService.userId()),
               starting_side: 'w'
             };
 
         return this.http.post<any>(`${this.baseUrl}/game`, payload);
-      }),
-      map((res: any) => {
-        const gameId = res.state?.game_id;
+    }),
+                     map((res: any) => {
+      const gameId = res.state?.game_id;
 
-        if (!gameId) {
+      if (!gameId) {
           throw new Error('Backend did not return a game id');
         }
 
         return String(gameId);
       })
-    );
+   )
   }
+  // return this.ensureGuestIfNeeded().pipe(
+    //   switchMap((identity) => {
+    //     const payload = identity.isGuest
+    //       ? {
+    //           action: 'create',
+    //           guest_id: identity.id,
+    //           starting_side: 'w'
+    //         }
+    //       : {
+    //           action: 'create',
+    //           player_id: Number(identity.id),
+    //           starting_side: 'w'
+    //         };
+    //
+    //     return this.http.post<any>(`${this.baseUrl}/game`, payload);
+    //   }),
+    //   map((res: any) => {
+    //     const gameId = res.state?.game_id;
+    //
+    //     if (!gameId) {
+    //       throw new Error('Backend did not return a game id');
+    //     }
+    //
+    //     return String(gameId);
+    //   })
+    // );
+  //}
 
   joinGame(gameId: string) {
-    return this.ensureGuestIfNeeded().pipe(
-      switchMap((identity) => {
-        const payload = identity.isGuest
+    return this.http.get<any>(`${API_ENDPOINT}/api/health`).pipe(
+      switchMap(() => {
+        const payload = this.authService.isGuest()
           ? {
               action: 'join',
               game_id: gameId,
-              guest_id: identity.id
+              guest_id: this.authService.userId()
             }
           : {
               action: 'join',
               game_id: gameId,
-              player_id: Number(identity.id)
+              player_id: Number(this.authService.userId())
             };
 
         return this.http.post<any>(`${this.baseUrl}/game`, payload);
@@ -106,18 +136,18 @@ export class GameService {
   }
 
   getGameState(gameId: string) {
-    return this.ensureGuestIfNeeded().pipe(
-      switchMap((identity) => {
-        const payload = identity.isGuest
+    return this.http.get<any>(`${API_ENDPOINT}/api/health`).pipe(
+      switchMap(() => {
+        const payload = this.authService.isGuest()
           ? {
               action: 'state',
               game_id: gameId,
-              guest_id: identity.id
+              guest_id: this.authService.userId()
             }
           : {
               action: 'state',
               game_id: gameId,
-              player_id: Number(identity.id)
+              player_id: Number(this.authService.userId())
             };
 
         return this.http.post<any>(`${this.baseUrl}/game`, payload);
@@ -126,19 +156,19 @@ export class GameService {
   }
 
   makeMove(gameId: string, move: string) {
-    return this.ensureGuestIfNeeded().pipe(
-      switchMap((identity) => {
-        const payload = identity.isGuest
+    return this.http.get<any>(`${API_ENDPOINT}/api/health`).pipe(
+      switchMap(() => {
+        const payload = this.authService.isGuest()
           ? {
               action: 'move',
               game_id: gameId,
-              guest_id: identity.id,
+              guest_id: this.authService.userId(),
               move
             }
           : {
               action: 'move',
               game_id: gameId,
-              player_id: Number(identity.id),
+              player_id: Number(this.authService.userId()),
               move
             };
 

@@ -137,6 +137,7 @@ export class BoardStateService {
   boardLoad(gameId: string, playerId: string): Observable<void> {
     // Load initial state
     let req: GameRequest;
+    console.log(this.authService.isGuest())
     if (this.authService.isGuest()) {
       req = {
         action:"state",
@@ -154,6 +155,7 @@ export class BoardStateService {
         move: ""
       };
     }
+    console.log(req)
 
     this._playerId.update(_i => playerId);
     this._gameId.update(_i => gameId);
