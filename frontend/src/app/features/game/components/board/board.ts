@@ -37,8 +37,7 @@ export class Board {
   readonly targetableObservable$ = toObservable(this.targetable);
 
   ngOnInit() {
-    const userId = Number(this.authService.userId());
-    this.stateService.boardLoad(this.gameId, userId).subscribe();
+    this.stateService.boardLoad(this.gameId, this.authService.userId()).subscribe();
   }
 
   onPieceSelected(piece: ChessPiece) {
@@ -47,7 +46,7 @@ export class Board {
   }
 
   onPieceMoved(piece: ChessPiece, target: Position) {
-    const userId = Number(this.authService.userId());
+    const userId = this.authService.userId();
     this.stateService.updatePiecePosition(this.gameId, userId, piece, target).subscribe();
   }
 
