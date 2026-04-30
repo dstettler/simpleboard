@@ -9,10 +9,12 @@ import { GameStatus, parseGameStatus } from './BoardState';
 
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
+import { AuthStateService } from '../../../core/services/auth-state.service';
 type GameRequest = {
   action: string;
   game_id: string;
-  player_id: number;
+  guest_id: string|undefined;
+  player_id: number|undefined;
   move: string;
 }
 
@@ -24,8 +26,8 @@ type GameApiResponse = {
   state: string;
   status: string;
   side: string;
-  black_player_id: string;
-  white_player_id: string;
+  black_player_id: number;
+  white_player_id: number;
   next_moves: string[];
   prev_moves: string[];
   white_remaining_ms: number;
@@ -51,6 +53,7 @@ export type PlayerColor = 'w' | 'b' | null;
 @Injectable({ providedIn: 'root' })
 export class BoardStateService {
   private http = inject(HttpClient);
+  private authService = inject(AuthStateService);
 
   private _pieces = signal<ChessPiece[]>([]);
   private _isOwnMove = signal<boolean>(false);
@@ -61,7 +64,7 @@ export class BoardStateService {
   private _userColor = signal<PlayerColor>(null);
   private _nextMoves = signal<Move[]>([]);
   private _gameStatus = signal<GameStatus>("Waiting");
-  private _playerId = signal<number>(-1);
+  private _playerId = signal<string>('');
   private _gameId = signal<string>('');
   private _timerRemainingMs = signal<number>(-1);
   private _pollBackend = signal<boolean>(false);
@@ -85,7 +88,7 @@ export class BoardStateService {
   private poll$ = toObservable(this.pollBackend).pipe(
     switchMap(p => p ? timer(0, BACKEND_PING_RATE_MS) : EMPTY),
     switchMap(() => {
-      if (this.playerId() != -1 && this.gameId() != '') {
+      if (this.playerId() != '' && this.gameId() != '') {
         return this.boardLoad(this.gameId(), this.playerId())
       } else {
         return EMPTY;
@@ -98,7 +101,7 @@ export class BoardStateService {
     // If timer is runing (p), wait one second, update GUI signal
     switchMap(p => p ? timer(0, 1000) : EMPTY),
     switchMap(() => {
-      if (this.playerId() != -1 && this.gameId() != '') {
+      if (this.playerId() != '' && this.gameId() != '') {
         this._timerRemainingMs.update(prevTime => prevTime - 1000);
 
         if (this.timerRemainingMs() < 0) {
@@ -131,14 +134,26 @@ export class BoardStateService {
   /**
    * @returns Observable<void>, so the caller may make use of the completion event after request completion and state update.
    */
-  boardLoad(gameId: string, playerId: number): Observable<void> {
+  boardLoad(gameId: string, playerId: string): Observable<void> {
     // Load initial state
-    const req: GameRequest = {
-      action:"state",
-      game_id: gameId,
-      player_id: playerId,
-      move: ""
-    };
+    let req: GameRequest;
+    if (this.authService.isGuest()) {
+      req = {
+        action:"state",
+        game_id: gameId,
+        guest_id: playerId,
+        player_id: undefined,
+        move: ""
+      };
+    } else {
+      req = {
+        action:"state",
+        game_id: gameId,
+        player_id: Number(playerId),
+        guest_id: undefined,
+        move: ""
+      };
+    }
 
     this._playerId.update(_i => playerId);
     this._gameId.update(_i => gameId);
@@ -161,18 +176,17 @@ export class BoardStateService {
           // User color should only need to be updated once.
           // This must happen before decoding state so pieces can be enabled.
           if (this.userColor() == null) {
-            console.log('setting user color')
             switch (this.playerId()) {
-              case Number(resp.state.black_player_id):
+              case resp.state.black_player_id.toString():
                 this._userColor.update(_ => 'b');
                 break;
-              case Number(resp.state.black_guest_id):
+              case resp.state.black_guest_id:
                 this._userColor.update(_ => 'b');
                 break;
-              case Number(resp.state.white_player_id):
+              case resp.state.white_player_id.toString():
                 this._userColor.update(_ => 'w');
                 break;
-              case Number(resp.state.white_guest_id):
+              case resp.state.white_guest_id:
                 this._userColor.update(_ => 'w');
               break;
               default:
@@ -242,7 +256,7 @@ export class BoardStateService {
     );
   }
 
-  updatePiecePosition(gameId: string, playerId: number, piece: ChessPiece, newPos: Position): Observable<void> {
+  updatePiecePosition(gameId: string, playerId: string, piece: ChessPiece, newPos: Position): Observable<void> {
     let captureChar = '';
     for (const piece of this._pieces()) {
       if (positionsEqual(piece.position, newPos))
@@ -252,12 +266,24 @@ export class BoardStateService {
     const moveStr = `${positionToAlgebraic(piece.position)}${captureChar}${positionToAlgebraic(newPos)}`;
     console.log(`Moving: ${moveStr}`);
 
-    const req: GameRequest = {
-      action: "move",
-      game_id: gameId,
-      player_id: playerId,
-      move: moveStr
-    };
+    let req: GameRequest;
+    if (this.authService.isGuest()) {
+      req = {
+        action: "move",
+        game_id: gameId,
+        guest_id: playerId,
+        player_id: undefined,
+        move: moveStr
+      };
+    } else {
+      req = {
+        action: "move",
+        game_id: gameId,
+        player_id: Number(playerId),
+        guest_id: undefined,
+        move: moveStr
+      };
+    }
 
     return this.gameRequest(req);
   }
