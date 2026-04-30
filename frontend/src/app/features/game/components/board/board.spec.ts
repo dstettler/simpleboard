@@ -12,6 +12,14 @@ describe('Board', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
+    const localStorage = {
+      getItem: (_key: string) => {
+        return "1";
+      }
+    }
+
+    Object.defineProperty(window, 'localStorage', { value:  localStorage });
+
     await TestBed.configureTestingModule({
       imports: [Board],
       providers: [

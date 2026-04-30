@@ -3,6 +3,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app';
 
 describe('AppComponent', () => {
+    const localStorage = {
+      getItem: (_key: string) => {
+        return "1";
+      }
+    }
+
+  Object.defineProperty(window, 'localStorage', { value:  localStorage });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent, RouterTestingModule.withRoutes([])],

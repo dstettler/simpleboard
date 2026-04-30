@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 
 import { Game } from './game';
 import { API_ENDPOINT } from '../../app.constants'
@@ -12,11 +13,20 @@ describe('Game', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
+    const localStorage = {
+      getItem: (_key: string) => {
+        return "1";
+      }
+    }
+
+    Object.defineProperty(window, 'localStorage', { value:  localStorage });
+
     await TestBed.configureTestingModule({
       imports: [Game],
       providers: [
         provideHttpClient(),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        provideRouter([{path: 'game/:id', component: Game}])
       ]
     })
     .compileComponents();
