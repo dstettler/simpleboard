@@ -1,24 +1,22 @@
 <nav class="navbar">
   <div class="nav-shell">
 
+    <!-- Left: Brand -->
     <a class="nav-brand" routerLink="/">
       <span class="brand-mark">♞</span>
       <span class="brand-text">SimpleBoard</span>
     </a>
 
+    <!-- Center: Navigation -->
     <div class="nav-center">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
       <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
       <a routerLink="/login" routerLinkActive="active">Login</a>
     </div>
-
     <div class="nav-right">
-      <button class="nav-play-btn" type="button" (click)="gameModal.openGameModal()">
-        Play
-      </button>
-    </div>
-
+  <button class="nav-cta" (click)="onStartGame()">
+      Play Now
+    </button>
+</div>
   </div>
 </nav>
-
-<app-game-entry-modal #gameModal></app-game-entry-modal>

@@ -37,8 +37,6 @@ export class Board {
   readonly targetableObservable$ = toObservable(this.targetable);
 
   ngOnInit() {
-    console.log(this.authService.userId());
-    console.log(this.gameId);
     this.stateService.boardLoad(this.gameId, this.authService.userId()).subscribe();
   }
 

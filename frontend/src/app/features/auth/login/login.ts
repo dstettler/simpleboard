@@ -69,7 +69,6 @@ export class LoginComponent {
         this.authState.setUserId(response.user.user_id.toString());
         const token = response.token;
         localStorage.setItem("token", token);
-        localStorage.setItem("userId", response.user.user_id.toString());
         this.successMessage = response.message;
         this.router.navigate(['/dashboard']);
       },

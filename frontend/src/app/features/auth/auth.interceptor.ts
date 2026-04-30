@@ -3,7 +3,6 @@ import { HttpClient, HttpInterceptorFn } from '@angular/common/http';
 import { API_ENDPOINT } from '../../app.constants';
 import { inject } from '@angular/core';
 import { AuthStateService } from '../../core/services/auth-state.service';
-import { switchMap } from 'rxjs';
 type UserType = {
   guest_id: string;
 }
@@ -22,27 +21,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const guestToken = localStorage.getItem('guestToken');
   let bearer = '';
 
-  if (req.url.includes("/api/guest")) {
-    return  next(req);
-  }
-
-  console.log('intercepting');
-  console.log(req);
   if (!token && !guestToken) {
     // Get guest token and return with that
-    return http.get<GuestResponse>(`${API_ENDPOINT}/api/guest`).pipe(
-      switchMap(response => {
+    http.get<GuestResponse>(`${API_ENDPOINT}/api/guest`).subscribe({
+      next: (response) => {
         localStorage.setItem("guestToken", response.token);
-        localStorage.setItem("guestId", response.user.guest_id);
         authState.setUserId(response.user.guest_id);
         authState.setGuest(true);
         bearer = response.token;
-        const authReq = req.clone({
-          setHeaders: { Authorization: `Bearer ${bearer}` }
-        });
-        return next(authReq)
-      })
-    )
+      },
+      error: (err) => {
+        console.log("Error registering guest token");
+      }
+    });
   } else if (!token && guestToken) {
     bearer = guestToken;
   } else if (token) {

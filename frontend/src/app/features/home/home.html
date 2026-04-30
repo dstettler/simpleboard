@@ -23,13 +23,11 @@
       <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
         <button
   type="button"
-  (click)="gameModal.openGameModal()"
-  class="hero-play-btn"
+  (click)="onStartGame()"
+  class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
 >
   Play Now
 </button>
-
-<app-game-entry-modal #gameModal></app-game-entry-modal>
 
         <a
           href="#features"
@@ -143,14 +141,11 @@
 
       <div class="mt-8">
         <button
-  type="button"
-  (click)="gameModal.openGameModal()"
-  class="hero-play-btn"
->
-  Play Now
-</button>
-
-      <app-game-entry-modal #gameModal></app-game-entry-modal>
+          (click)="onStartGame()"
+          class="rounded-full bg-white px-8 py-3 text-sm font-semibold text-black transition hover:bg-white/85"
+        >
+          Play Now
+        </button>
       </div>
     </div>
   </section>
