@@ -14,7 +14,7 @@
 - Game joining
 - Guest invite link generation
 - Dashboard queries and field storage
-- Player login daily streak tracker
+- Player statistics
 - Chess engine performance analysis
 
 ## Tests (Frontend)
