@@ -1,4 +1,5 @@
-import { HttpClient, HttpInterceptorFn } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpInterceptorFn } from '@angular/common/http';
+import { catchError, map, of, switchMap, tap } from 'rxjs';
 
 import { API_ENDPOINT } from '../../app.constants';
 import { inject } from '@angular/core';
@@ -14,35 +15,44 @@ type GuestResponse = {
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const http = inject(HttpClient);
+  const http = new HttpClient(inject(HttpBackend));
   const authState = inject(AuthStateService);
 
   const token = localStorage.getItem('token');
   const guestToken = localStorage.getItem('guestToken');
-  let bearer = '';
 
-  if (!token && !guestToken) {
-    // Get guest token and return with that
-    http.get<GuestResponse>(`${API_ENDPOINT}/api/guest`).subscribe({
-      next: (response) => {
-        localStorage.setItem("guestToken", response.token);
-        authState.setUserId(response.user.guest_id);
-        authState.setGuest(true);
-        bearer = response.token;
-      },
-      error: (err) => {
-        console.log("Error registering guest token");
-      }
+  const addAuthHeader = (bearer: string) => {
+    return req.clone({
+      setHeaders: bearer ? { Authorization: `Bearer ${bearer}` } : {}
     });
-  } else if (!token && guestToken) {
-    bearer = guestToken;
-  } else if (token) {
-    bearer = token;
-  }
+  };
 
-  const authReq = req.clone({
-    setHeaders: { Authorization: `Bearer ${bearer}` }
-  });
+  const request$ = (() => {
+    if (req.url === `${API_ENDPOINT}/api/guest`) {
+      return of(req);
+    }
 
-  return next(authReq);
+    if (token) {
+      return of(addAuthHeader(token));
+    }
+
+    if (guestToken) {
+      return of(addAuthHeader(guestToken));
+    }
+
+    return http.get<GuestResponse>(`${API_ENDPOINT}/api/guest`).pipe(
+      tap((response) => {
+        localStorage.setItem('guestToken', response.token);
+        localStorage.setItem('guestId', response.user.guest_id);
+        authState.setGuestId(response.user.guest_id);
+      }),
+      map((response) => addAuthHeader(response.token)),
+      catchError((err) => {
+        console.error('Error registering guest token', err);
+        return of(req);
+      })
+    );
+  })();
+
+  return request$.pipe(switchMap((authReq) => next(authReq)));
 };
