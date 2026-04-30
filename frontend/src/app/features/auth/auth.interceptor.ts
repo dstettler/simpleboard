@@ -26,8 +26,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return  next(req);
   }
 
-  console.log('intercepting');
-  console.log(req);
   if (!token && !guestToken) {
     // Get guest token and return with that
     return http.get<GuestResponse>(`${API_ENDPOINT}/api/guest`).pipe(
