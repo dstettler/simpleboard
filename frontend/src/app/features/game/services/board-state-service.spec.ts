@@ -61,7 +61,7 @@ describe('BoardStateService', () => {
   });
 
   it('should load state from request', () => {
-    service.boardLoad(0, 1).subscribe(_ => {
+    service.boardLoad("0", 1).subscribe(_ => {
       expect(service.userColor()).toBe('b');
       expect(service.fullmoveNum()).toBe(1);
 

@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	//"simpleboard/internal/domain"
 	"simpleboard/internal/auth"
 	"simpleboard/internal/repository"
 	"simpleboard/pkg/db"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	//"simpleboard/pkg/response"
 )
 
 // Logs a user in with username and password
@@ -40,22 +38,51 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// update the game streak number served in the response
+	updateStreak(&user)
+
 	// serve new login token
 	token, err := auth.NewUserToken(user.UserID, 24*time.Hour)
 	if err != nil {
-		fmt.Print(err.Error())
+		log.Printf("token creation failed for user %d: %v", user.UserID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
 		return
 	}
 
-	// user successfully logged in
+	// successfully logged in, serve token
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
 		"token":   token,
 		"user": gin.H{
-			"user_id":  user.UserID,
-			"username": user.Username,
-			"email":    user.Email,
+			"user_id":        user.UserID,
+			"username":       user.Username,
+			"email":          user.Email,
+			"current_streak": user.CurrentStreak,
+			"longest_streak": user.LongestStreak,
 		},
 	})
+}
+
+// updateStreak checks for new daily login and increments the streak
+func updateStreak(user *repository.User) {
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	last := user.LastLoginDate.UTC().Truncate(24 * time.Hour)
+
+	if last.Equal(today) {
+		return
+	}
+
+	yesterday := today.Add(-24 * time.Hour)
+	if last.Equal(yesterday) {
+		user.CurrentStreak++ // kept the streak alive
+	} else {
+		user.CurrentStreak = 1 // gap or first ever login
+	}
+
+	if user.CurrentStreak > user.LongestStreak {
+		user.LongestStreak = user.CurrentStreak
+	}
+	user.LastLoginDate = today
+
+	db.DB.Save(user)
 }
