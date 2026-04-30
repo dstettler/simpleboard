@@ -27,6 +27,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       next: (response) => {
         localStorage.setItem("guestToken", response.token);
         authState.setUserId(response.user.guest_id);
+        authState.setGuest(true);
         bearer = response.token;
       },
       error: (err) => {

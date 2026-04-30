@@ -27,6 +27,10 @@ export class AuthStateService {
     return this._isGuest;
   }
 
+  setGuest(b: boolean): void {
+    this._isGuest = b;
+  }
+
   setLoggedIn(value: boolean): void {
     this._isLoggedIn.set(value);
   }
