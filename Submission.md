@@ -233,8 +233,69 @@ PASS
 ok      simpleboard/internal/timer      (cached)
 ```
 
+## Benchmarks
+```
+goos: linux
+goarch: amd64
+pkg: simpleboard/internal/chess
+cpu: 12th Gen Intel(R) Core(TM) i9-12900K
+BenchmarkLegalMoves
+BenchmarkLegalMoves/start_(20_moves)
+BenchmarkLegalMoves/start_(20_moves)-24                   166032              7263 ns/op           12608 B/op        115 allocs/op
+BenchmarkLegalMoves/kiwipete_(48_moves)
+BenchmarkLegalMoves/kiwipete_(48_moves)-24                 69957             17434 ns/op           29712 B/op        224 allocs/op
+BenchmarkLegalMoves/endgame_sparse
+BenchmarkLegalMoves/endgame_sparse-24                     220728              5107 ns/op            8376 B/op         71 allocs/op
+BenchmarkPositionMoves
+BenchmarkPositionMoves/start_(20_moves)
+BenchmarkPositionMoves/start_(20_moves)-24                524324              2242 ns/op            5744 B/op         41 allocs/op
+BenchmarkPositionMoves/kiwipete_(48_moves)
+BenchmarkPositionMoves/kiwipete_(48_moves)-24             292012              4156 ns/op           14192 B/op         59 allocs/op
+BenchmarkPositionMoves/endgame_sparse
+BenchmarkPositionMoves/endgame_sparse-24                  832626              1366 ns/op            4344 B/op         21 allocs/op
+BenchmarkPerft
+BenchmarkPerft/depth1
+BenchmarkPerft/depth1-24                                  158770              7711 ns/op           12608 B/op        115 allocs/op
+BenchmarkPerft/depth2
+BenchmarkPerft/depth2-24                                    7677            146038 ns/op          255332 B/op       1435 allocs/op
+BenchmarkPerft/depth3
+BenchmarkPerft/depth3-24                                     330           3667612 ns/op         5431426 B/op      53138 allocs/op
+BenchmarkPerft/depth4
+BenchmarkPerft/depth4-24                                      15          71183074 ns/op        119333772 B/op    666944 allocs/op
+PASS
+ok      simpleboard/internal/chess      12.637s
+```
+
+### TestPerf Bench Example
+```
+=== RUN   TestPerfLegalMoves
+=== RUN   TestPerfLegalMoves/start_(20_moves)
+    perf_test.go:133: legal moves=20   iterations=10000  elapsed=74ms        135318 calls/sec  12608 B/call
+=== RUN   TestPerfLegalMoves/kiwipete_(48_moves)
+    perf_test.go:133: legal moves=48   iterations=10000  elapsed=171ms       58643 calls/sec  29712 B/call
+=== RUN   TestPerfLegalMoves/endgame_sparse
+    perf_test.go:133: legal moves=14   iterations=10000  elapsed=50ms        199704 calls/sec  8376 B/call
+--- PASS: TestPerfLegalMoves (0.30s)
+    --- PASS: TestPerfLegalMoves/start_(20_moves) (0.07s)
+    --- PASS: TestPerfLegalMoves/kiwipete_(48_moves) (0.17s)
+    --- PASS: TestPerfLegalMoves/endgame_sparse (0.05s)
+=== RUN   TestPerfPerft
+=== RUN   TestPerfPerft/depth1
+    perf_test.go:171: depth=1  nodes=20      elapsed=18µs          1095590 nodes/sec  12832 B allocated
+=== RUN   TestPerfPerft/depth2
+    perf_test.go:171: depth=2  nodes=400     elapsed=122µs         3272144 nodes/sec  255440 B allocated
+=== RUN   TestPerfPerft/depth3
+    perf_test.go:171: depth=3  nodes=8902    elapsed=4.148ms       2145995 nodes/sec  5431360 B allocated
+--- PASS: TestPerfPerft (0.01s)
+    --- PASS: TestPerfPerft/depth1 (0.00s)
+    --- PASS: TestPerfPerft/depth2 (0.00s)
+    --- PASS: TestPerfPerft/depth3 (0.00s)
+PASS
+ok      simpleboard/internal/chess      0.307s
+```
+
 ## Backend API Docs
-## Environment Variables
+### Environment Variables
 Environment variables for the backend can be easily defined in an `env.sh` using the template:
 ``` bash
 cp env.sh.template env.sh
