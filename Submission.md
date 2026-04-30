@@ -12,7 +12,7 @@
 - Game timer functionality
 - Game queue table
 - Game joining
-- Guest invite link generation
+- Guest invite code generation
 - Dashboard queries and field storage
 - Player statistics
 - Chess engine performance analysis
