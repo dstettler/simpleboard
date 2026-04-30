@@ -63,7 +63,7 @@ export class BoardStateService {
   private _fullmoveNum = signal<number>(-1);
   private _userColor = signal<PlayerColor>(null);
   private _nextMoves = signal<Move[]>([]);
-  private _gameStatus = signal<GameStatus>("Waiting");
+  private _gameStatus = signal<GameStatus>("NotStarted");
   private _playerId = signal<string>('');
   private _gameId = signal<string>('');
   private _timerRemainingMs = signal<number>(-1);
@@ -197,6 +197,9 @@ export class BoardStateService {
             }
           }
 
+          const parsedStatus = parseGameStatus(resp.state.status);
+          this._gameStatus.update(_p => parsedStatus);
+
           this.fenDecode(resp.state.state);
           this._nextMoves.update(_p => resp.state.next_moves.map(move_str => {
             let start: Position, finish: Position;
@@ -216,7 +219,7 @@ export class BoardStateService {
 
             for (const [i, piece] of this._pieces().entries()) {
               const pieceIsUserColor = piece.isWhite == (this.userColor() == 'w');
-              const pieceEnableable = this.isOwnMove() && pieceIsUserColor;
+              const pieceEnableable = this.isOwnMove() && pieceIsUserColor && this.gameStatus() == 'InProgress';
               if (positionsEqual(piece.position, start)) {
                 this._pieces.update(p => { p[i].enabled = pieceEnableable; return p; });
                 return {pieceIdx: i, targetPos: finish};
@@ -240,14 +243,13 @@ export class BoardStateService {
             this._timerRemainingMs.update(_ => trueRemaining - timeDelta);
           }
 
-          this._gameStatus.update(_p => parseGameStatus(resp.state.status));
-          if (this.isOwnMove() && resp.state.status == 'InProgress') {
+          if (this.isOwnMove() && parsedStatus == 'InProgress') {
             this._gameTimerRunning.update(_ => true);
             this._pollBackend.update(_ => false);
-          } else if (resp.state.status == 'InProgress') {
+          } else if (parsedStatus == 'InProgress' || parsedStatus == 'NotStarted') {
             this._gameTimerRunning.update(_ => false);
             this._pollBackend.update(_ => true);
-          } else {
+          }  else {
             this._gameTimerRunning.update(_ => false);
             this._pollBackend.update(_ => false);
           }

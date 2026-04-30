@@ -28,3 +28,14 @@
          }
     }
 </div>
+
+<!-- Game Over Modal -->
+@if (gameStatusObservable$ | async; as status) {
+  @if (status === 'Draw' || status === 'WinWhite' || status === 'WinBlack') {
+    <div class="game-over-modal">
+      <div class="modal-content">
+        <h2>{{ getGameStatusText(status) }}</h2>
+      </div>
+    </div>
+  }
+}
