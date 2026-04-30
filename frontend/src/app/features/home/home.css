@@ -107,6 +107,23 @@
   cursor: pointer;
 }
 
+.hero-play-btn {
+  height: 44px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 999px;
+  background: white;
+  color: black;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.hero-play-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+}
 /* FOOTER */
 
 .footer {
@@ -115,3 +132,4 @@
   background: #1a1a1a;
   margin-top: 40px;
 }
+
